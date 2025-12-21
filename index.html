@@ -30,7 +30,7 @@
 body {
   background: var(--bg);
   color: var(--text);
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
 }
@@ -38,7 +38,7 @@ body {
 .app {
   width: 100%;
   max-width: 420px;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -84,14 +84,14 @@ body {
   color: var(--muted);
 }
 
-/* CONTENT (FIXED) */
+/* CONTENT */
 .content {
   flex: 1;
   overflow-y: auto;
   padding: 10px 14px;
 }
 
-/* DAY CARD */
+/* CARD */
 .card {
   background: var(--card);
   border-radius: 18px;
@@ -149,11 +149,6 @@ body {
   text-align: center;
   border-left: 3px solid var(--accent);
 }
-
-/* MOBILE ONLY */
-@media (min-width: 768px) {
-  body { display: none; }
-}
 </style>
 </head>
 
@@ -193,12 +188,9 @@ const START_DATE = new Date("2026-01-01");
 const TOTAL_DAYS = 1000;
 
 /* SUPABASE */
-const SUPABASE_URL = "https://aswpbbgudehejxselrbx.supabase.co";
-const SUPABASE_KEY = "sb_publishable_qBV8rROClCMhvzxynF4cTg_z1IBD9Vr";
-
 const supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
+  "https://aswpbbgudehejxselrbx.supabase.co",
+  "sb_publishable_qBV8rROClCMhvzxynF4cTg_z1IBD9Vr"
 );
 
 /* DOM */
@@ -214,20 +206,14 @@ function formatDate(date) {
   });
 }
 
-/* DATA */
 let completed = [];
 
 /* DB */
 async function loadCompletedDays() {
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("completed_days")
     .select("day");
-
-  if (error) {
-    console.error(error);
-    return [];
-  }
-  return data.map(d => d.day);
+  return data ? data.map(d => d.day) : [];
 }
 
 async function addDay(day) {
