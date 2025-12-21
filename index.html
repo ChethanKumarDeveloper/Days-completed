@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Days Completed</title>
 
+<!-- Supabase client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 :root {
   --bg: #0b0e13;
@@ -189,60 +192,24 @@ body {
 </div>
 
 <script>
-/* ------------------ CONFIG ------------------ */
+/* ---------------- CONFIG ---------------- */
 const START_DATE = new Date("2026-01-01");
 const TOTAL_DAYS = 1000;
 
-/* ------------------ DOM ------------------ */
+/* ---------------- SUPABASE ---------------- */
+const SUPABASE_URL = "https://aswpbbgudehejxselrbx.supabase.co";
+const SUPABASE_KEY = "sb_publishable_qBV8rROClCMhvzxynF4cTg_z1IBD9Vr";
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+/* ---------------- DOM ---------------- */
 const list = document.getElementById("list");
 const countEl = document.getElementById("count");
 
-/* ------------------ INDEXED DB ------------------ */
-const DB_NAME = "DaysTrackerDB";
-const STORE_NAME = "completedDays";
-const DB_VERSION = 1;
-
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onupgradeneeded = e => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: "day" });
-      }
-    };
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject("Failed to open DB");
-  });
-}
-
-async function getCompletedDays() {
-  const db = await openDB();
-  return new Promise(resolve => {
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const store = tx.objectStore(STORE_NAME);
-    const req = store.getAll();
-    req.onsuccess = () => resolve(req.result.map(d => d.day));
-  });
-}
-
-async function saveDay(day) {
-  const db = await openDB();
-  db.transaction(STORE_NAME, "readwrite")
-    .objectStore(STORE_NAME)
-    .put({ day });
-}
-
-async function removeDay(day) {
-  const db = await openDB();
-  db.transaction(STORE_NAME, "readwrite")
-    .objectStore(STORE_NAME)
-    .delete(day);
-}
-
-/* ------------------ UTIL ------------------ */
+/* ---------------- UTIL ---------------- */
 function formatDate(date) {
   return date.toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -251,11 +218,42 @@ function formatDate(date) {
   });
 }
 
-/* ------------------ APP LOGIC ------------------ */
+/* ---------------- DATA ---------------- */
 let completed = [];
 
+/* ---------------- DB OPS ---------------- */
+async function loadCompletedDays() {
+  const { data, error } = await supabase
+    .from("completed_days")
+    .select("day");
+
+  if (error) {
+    console.error("Load error:", error);
+    return [];
+  }
+  return data.map(d => d.day);
+}
+
+async function addDay(day) {
+  const { error } = await supabase
+    .from("completed_days")
+    .insert({ day });
+
+  if (error) console.error("Insert error:", error);
+}
+
+async function removeDay(day) {
+  const { error } = await supabase
+    .from("completed_days")
+    .delete()
+    .eq("day", day);
+
+  if (error) console.error("Delete error:", error);
+}
+
+/* ---------------- APP ---------------- */
 async function init() {
-  completed = await getCompletedDays();
+  completed = await loadCompletedDays();
   render();
 }
 
@@ -289,7 +287,7 @@ function render() {
         card.classList.remove("completed");
       } else {
         completed.push(dayNumber);
-        await saveDay(dayNumber);
+        await addDay(dayNumber);
         card.classList.add("completed");
       }
       countEl.textContent = completed.length;
