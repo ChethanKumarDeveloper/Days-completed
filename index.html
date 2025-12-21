@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Days Completed</title>
 
-<!-- Supabase client -->
+<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -30,6 +30,7 @@
 body {
   background: var(--bg);
   color: var(--text);
+  height: 100vh;
   display: flex;
   justify-content: center;
 }
@@ -42,11 +43,8 @@ body {
   flex-direction: column;
 }
 
-/* HEADER CARD */
+/* HEADER */
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
   padding: 14px;
   background: var(--bg);
 }
@@ -86,7 +84,7 @@ body {
   color: var(--muted);
 }
 
-/* CONTENT */
+/* CONTENT (FIXED) */
 .content {
   flex: 1;
   overflow-y: auto;
@@ -136,10 +134,8 @@ body {
   transform: translateX(0);
 }
 
-/* FOOTER QUOTE */
+/* FOOTER */
 .footer {
-  position: sticky;
-  bottom: 0;
   padding: 14px;
   background: linear-gradient(to top, rgba(11,14,19,0.95), rgba(11,14,19,0.7));
 }
@@ -192,11 +188,11 @@ body {
 </div>
 
 <script>
-/* ---------------- CONFIG ---------------- */
+/* CONFIG */
 const START_DATE = new Date("2026-01-01");
 const TOTAL_DAYS = 1000;
 
-/* ---------------- SUPABASE ---------------- */
+/* SUPABASE */
 const SUPABASE_URL = "https://aswpbbgudehejxselrbx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_qBV8rROClCMhvzxynF4cTg_z1IBD9Vr";
 
@@ -205,11 +201,11 @@ const supabase = window.supabase.createClient(
   SUPABASE_KEY
 );
 
-/* ---------------- DOM ---------------- */
+/* DOM */
 const list = document.getElementById("list");
 const countEl = document.getElementById("count");
 
-/* ---------------- UTIL ---------------- */
+/* UTILS */
 function formatDate(date) {
   return date.toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -218,40 +214,31 @@ function formatDate(date) {
   });
 }
 
-/* ---------------- DATA ---------------- */
+/* DATA */
 let completed = [];
 
-/* ---------------- DB OPS ---------------- */
+/* DB */
 async function loadCompletedDays() {
   const { data, error } = await supabase
     .from("completed_days")
     .select("day");
 
   if (error) {
-    console.error("Load error:", error);
+    console.error(error);
     return [];
   }
   return data.map(d => d.day);
 }
 
 async function addDay(day) {
-  const { error } = await supabase
-    .from("completed_days")
-    .insert({ day });
-
-  if (error) console.error("Insert error:", error);
+  await supabase.from("completed_days").insert({ day });
 }
 
 async function removeDay(day) {
-  const { error } = await supabase
-    .from("completed_days")
-    .delete()
-    .eq("day", day);
-
-  if (error) console.error("Delete error:", error);
+  await supabase.from("completed_days").delete().eq("day", day);
 }
 
-/* ---------------- APP ---------------- */
+/* APP */
 async function init() {
   completed = await loadCompletedDays();
   render();
@@ -262,32 +249,30 @@ function render() {
   countEl.textContent = completed.length;
 
   for (let i = 0; i < TOTAL_DAYS; i++) {
-    const dayNumber = i + 1;
+    const dayNum = i + 1;
     const date = new Date(START_DATE);
     date.setDate(START_DATE.getDate() + i);
 
     const card = document.createElement("div");
     card.className = "card";
-    if (completed.includes(dayNumber)) {
-      card.classList.add("completed");
-    }
+    if (completed.includes(dayNum)) card.classList.add("completed");
 
     card.innerHTML = `
       <div class="card-info">
-        <h3>Day ${dayNumber}</h3>
+        <h3>Day ${dayNum}</h3>
         <p>${formatDate(date)}</p>
       </div>
       <div class="badge">Completed</div>
     `;
 
     card.onclick = async () => {
-      if (completed.includes(dayNumber)) {
-        completed = completed.filter(d => d !== dayNumber);
-        await removeDay(dayNumber);
+      if (completed.includes(dayNum)) {
+        completed = completed.filter(d => d !== dayNum);
+        await removeDay(dayNum);
         card.classList.remove("completed");
       } else {
-        completed.push(dayNumber);
-        await addDay(dayNumber);
+        completed.push(dayNum);
+        await addDay(dayNum);
         card.classList.add("completed");
       }
       countEl.textContent = completed.length;
