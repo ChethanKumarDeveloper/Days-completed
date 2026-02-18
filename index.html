@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Days Completed</title>
 
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 :root {
   --bg: #0b0e13;
@@ -43,7 +40,6 @@ body {
   flex-direction: column;
 }
 
-/* HEADER */
 .header {
   padding: 14px;
 }
@@ -83,15 +79,13 @@ body {
   color: var(--muted);
 }
 
-/* 🔥 CONTENT — FIXED */
 .content {
   flex: 1;
-  min-height: 0;              /* ✅ CRITICAL FIX */
+  min-height: 0;
   overflow-y: auto;
   padding: 10px 14px;
 }
 
-/* DAY CARD */
 .card {
   background: var(--card);
   border-radius: 18px;
@@ -134,7 +128,6 @@ body {
   transform: translateX(0);
 }
 
-/* FOOTER */
 .footer {
   padding: 14px;
 }
@@ -152,10 +145,8 @@ body {
 </head>
 
 <body>
-
 <div class="app">
 
-  <!-- HEADER -->
   <div class="header">
     <div class="header-card">
       <div class="header-left">
@@ -169,12 +160,10 @@ body {
     </div>
   </div>
 
-  <!-- CONTENT -->
   <div class="content" id="list">
     <div style="color:#666">Loading days…</div>
   </div>
 
-  <!-- FOOTER -->
   <div class="footer">
     <div class="footer-card">
       “You don’t need motivation. You need consistency.”
@@ -183,45 +172,62 @@ body {
 
 </div>
 
-<script>
-window.onload = async function () {
+<!-- 🔥 FIREBASE + APP LOGIC -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  deleteDoc,
+  getDocs,
+  collection
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-  /* CONFIG */
-  const START_DATE = new Date("2026-01-01");
-  const TOTAL_DAYS = 1000;
+/* FIREBASE CONFIG */
+const firebaseConfig = {
+  apiKey: "AIzaSyC2eBGQa-QrmzzabyGabU6e3vt9UomlI7c",
+  authDomain: "completed-days.firebaseapp.com",
+  projectId: "completed-days",
+  storageBucket: "completed-days.firebasestorage.app",
+  messagingSenderId: "137286997518",
+  appId: "1:137286997518:web:221c7010e09d014bc28e5f"
+};
 
-  /* SUPABASE */
-  const supabase = window.supabase.createClient(
-    "https://aswpbbgudehejxselrbx.supabase.co",
-    "sb_publishable_qBV8rROClCMhvzxynF4cTg_z1IBD9Vr"
-  );
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  const list = document.getElementById("list");
-  const countEl = document.getElementById("count");
+/* CONFIG */
+const START_DATE = new Date("2026-01-01");
+const TOTAL_DAYS = 1000;
 
-  function formatDate(date) {
-    return date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric"
-    });
-  }
+const list = document.getElementById("list");
+const countEl = document.getElementById("count");
 
-  async function loadCompletedDays() {
-    const { data } = await supabase
-      .from("completed_days")
-      .select("day");
-    return data ? data.map(d => d.day) : [];
-  }
+function formatDate(date) {
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+}
 
-  async function addDay(day) {
-    await supabase.from("completed_days").insert({ day });
-  }
+/* FIRESTORE HELPERS */
+async function loadCompletedDays() {
+  const snapshot = await getDocs(collection(db, "completed_days"));
+  return snapshot.docs.map(d => Number(d.id));
+}
 
-  async function removeDay(day) {
-    await supabase.from("completed_days").delete().eq("day", day);
-  }
+async function addDay(day) {
+  await setDoc(doc(db, "completed_days", String(day)), { completed: true });
+}
 
+async function removeDay(day) {
+  await deleteDoc(doc(db, "completed_days", String(day)));
+}
+
+/* APP INIT */
+async function init() {
   const completed = await loadCompletedDays();
   countEl.textContent = completed.length;
   list.innerHTML = "";
@@ -257,8 +263,9 @@ window.onload = async function () {
 
     list.appendChild(card);
   }
-};
-</script>
+}
 
+init();
+</script>
 </body>
 </html>
