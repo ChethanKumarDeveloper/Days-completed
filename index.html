@@ -4,151 +4,110 @@
   <meta charset="UTF-8" />
   <title>Days Completed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#F6E7C1" />
 
   <style>
-    :root {
-      --bg: #FFFDF8;
-      --card: #F6E7C1;
-      --done: #B9F871;
-      --text: #1A1A1A;
-      --muted: #9A9A9A;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
     body {
       margin: 0;
       font-family: system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      justify-content: center;
-      min-height: 100vh;
+      background: #FFFDF8;
     }
 
     .app {
-      width: 100%;
       max-width: 420px;
+      margin: auto;
       min-height: 100vh;
-      padding: 20px 16px 24px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
     }
 
-    /* ---------- LOGIN ---------- */
-    .login {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    .login input {
-      padding: 14px;
-      border-radius: 14px;
-      border: 1px solid #ddd;
-      font-size: 1rem;
-    }
-
-    .login button {
-      padding: 14px;
-      border-radius: 14px;
-      border: none;
-      background: var(--card);
-      font-weight: 700;
-      font-size: 1rem;
-    }
-
-    .error {
-      color: red;
-      font-size: 0.9rem;
-    }
-
-    /* ---------- HEADER ---------- */
     .header {
-      background: var(--card);
-      border-radius: 26px;
+      background: #F6E7C1;
+      border-radius: 24px;
       padding: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
     }
 
     .count {
-      width: 64px;
-      height: 64px;
-      background: var(--done);
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
+      background: #B9F871;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2rem;
-      font-weight: 700;
+      font-size: 24px;
+      font-weight: bold;
     }
 
-    /* ---------- GRID (FIXED) ---------- */
     .grid {
+      margin: 20px 0;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin-bottom: 16px;
-      min-height: 280px;   /* 🔑 CRITICAL FIX */
+      gap: 12px;
     }
 
     .day {
-      background: var(--card);
-      border-radius: 20px;
+      background: #F6E7C1;
+      border-radius: 18px;
       padding: 18px;
       text-align: center;
       font-weight: 600;
     }
 
     .today {
-      outline: 3px solid var(--text);
-      cursor: pointer;
+      outline: 3px solid #000;
     }
 
     .completed {
-      background: var(--done);
+      background: #B9F871;
     }
 
     .future {
-      opacity: 0.45;
-      color: var(--muted);
+      opacity: 0.5;
     }
 
-    /* ---------- ACTIONS ---------- */
     .actions {
       display: flex;
       gap: 12px;
       margin-bottom: 16px;
     }
 
-    .actions button {
+    button {
       flex: 1;
       padding: 14px;
-      border-radius: 18px;
+      border-radius: 16px;
       border: none;
-      background: var(--card);
-      font-weight: 700;
+      background: #F6E7C1;
+      font-weight: bold;
     }
 
-    /* ---------- QUOTE ---------- */
     .quote {
-      background: var(--card);
-      border-radius: 24px;
+      margin-top: auto;
+      background: #F6E7C1;
+      border-radius: 20px;
       padding: 20px;
       text-align: center;
-      font-size: 1.3rem;
-      font-weight: 700;
-      margin-top: auto;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .login {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .login input {
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid #ccc;
     }
   </style>
 </head>
@@ -156,16 +115,16 @@
 <body>
 <div class="app">
 
-  <!-- LOGIN VIEW -->
-  <div class="login" id="loginView">
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
+  <!-- LOGIN -->
+  <div class="login" id="login">
+    <input id="email" placeholder="Email" />
+    <input id="password" type="password" placeholder="Password" />
     <button id="loginBtn">Login</button>
-    <div class="error" id="error"></div>
+    <div id="error"></div>
   </div>
 
-  <!-- APP VIEW -->
-  <div id="appView" style="display:none; flex-direction:column; flex:1;">
+  <!-- APP -->
+  <div id="appView">
     <div class="header">
       <h1>Days<br>Completed</h1>
       <div class="count" id="count">0</div>
@@ -174,13 +133,12 @@
     <div class="grid" id="grid"></div>
 
     <div class="actions">
-      <button id="downloadBtn">Download</button>
-      <button id="logoutBtn">Logout</button>
+      <button id="download">Download</button>
+      <button id="logout">Logout</button>
     </div>
 
     <div class="quote">
-      “You don’t need motivation.<br>
-      You need consistency.”
+      “You don’t need motivation.<br>You need consistency.”
     </div>
   </div>
 
@@ -194,10 +152,7 @@
   const firebaseConfig = {
     apiKey: "AIzaSyC2eBGQa-QrmzzabyGabU6e3vt9UomlI7c",
     authDomain: "completed-days.firebaseapp.com",
-    projectId: "completed-days",
-    storageBucket: "completed-days.firebasestorage.app",
-    messagingSenderId: "137286997518",
-    appId: "1:137286997518:web:221c7010e09d014bc28e5f"
+    projectId: "completed-days"
   };
 
   const app = initializeApp(firebaseConfig);
@@ -207,22 +162,8 @@
   const grid = document.getElementById("grid");
   const countEl = document.getElementById("count");
 
-  const TOTAL_TILES = 8;
+  const TOTAL = 8;
   const TODAY_INDEX = 3;
-
-  document.getElementById("loginBtn").onclick = async () => {
-    try {
-      await signInWithEmailAndPassword(
-        auth,
-        email.value,
-        password.value
-      );
-    } catch (e) {
-      error.textContent = e.message;
-    }
-  };
-
-  document.getElementById("logoutBtn").onclick = () => signOut(auth);
 
   function ymd(d) {
     return d.toISOString().split("T")[0];
@@ -240,23 +181,22 @@
     const today = new Date();
     today.setHours(0,0,0,0);
 
-    for (let i = 0; i < TOTAL_TILES; i++) {
+    for (let i = 0; i < TOTAL; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i - TODAY_INDEX);
-      const key = ymd(d);
 
       const el = document.createElement("div");
       el.className = "day";
       el.textContent = d.toLocaleDateString();
+
+      const key = ymd(d);
 
       if (completed.includes(key)) {
         el.classList.add("completed");
       } else if (i === TODAY_INDEX) {
         el.classList.add("today");
         el.onclick = async () => {
-          await updateDoc(ref, {
-            completedDates: [...completed, key]
-          });
+          await updateDoc(ref, { completedDates: [...completed, key] });
           render(user);
         };
       } else if (i > TODAY_INDEX) {
@@ -267,21 +207,32 @@
     }
   }
 
+  document.getElementById("loginBtn").onclick = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email.value, password.value);
+    } catch (e) {
+      error.textContent = e.message;
+    }
+  };
+
+  document.getElementById("logout").onclick = () => signOut(auth);
+
   onAuthStateChanged(auth, async user => {
     if (!user) {
-      loginView.style.display = "flex";
+      login.style.display = "flex";
       appView.style.display = "none";
       return;
     }
 
-    loginView.style.display = "none";
-    appView.style.display = "flex";
+    login.style.display = "none";
+    appView.style.display = "block";
 
     const ref = doc(db, "users", user.uid);
     if (!(await getDoc(ref)).exists()) {
       await setDoc(ref, { completedDates: [] });
     }
 
+    // 🔥 THIS WAS MISSING BEFORE
     render(user);
   });
 </script>
