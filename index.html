@@ -6,47 +6,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
+    :root {
+      --base: #FFE0B2;
+      --done: #B9F871;
+      --text: #111;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: #fff;
-      color: #111;
+      color: var(--text);
       display: flex;
       justify-content: center;
-      padding: 24px;
+      padding: 16px;
     }
 
     .container {
-      max-width: 420px;
       width: 100%;
+      max-width: 420px;
     }
 
     /* Header */
     .header {
-      background: #FFE0B2;
-      border-radius: 24px;
-      padding: 20px;
+      background: var(--base);
+      border-radius: 22px;
+      padding: 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .header h1 {
-      font-size: 2rem;
+      font-size: 1.8rem;
       margin: 0;
       line-height: 1.1;
     }
 
     .count-circle {
-      width: 64px;
-      height: 64px;
-      background: #B9F871;
+      width: 56px;
+      height: 56px;
+      background: var(--done);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2rem;
+      font-size: 1.8rem;
       font-weight: 700;
     }
 
@@ -54,50 +65,69 @@
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 32px;
+      gap: 14px;
+      margin-bottom: 20px;
     }
 
     .date-card {
-      background: #FFE0B2;
-      border-radius: 20px;
-      padding: 24px 16px;
+      background: var(--base);
+      border-radius: 18px;
+      padding: 20px 12px;
       text-align: center;
       font-weight: 700;
-      cursor: default;
+      user-select: none;
     }
 
     .date-card span {
       display: block;
-      font-size: 0.9rem;
-      margin-bottom: 6px;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
     }
 
-    .date-card .date {
-      font-size: 1.3rem;
+    .date {
+      font-size: 1.25rem;
     }
 
-    /* States (logic will control these) */
+    /* States */
     .today {
-      outline: 3px solid #111;
       cursor: pointer;
+      box-shadow: 0 0 0 3px var(--text);
+    }
+
+    .today:not(.completed):active {
+      transform: scale(0.98);
     }
 
     .completed {
-      background: #B9F871;
+      background: var(--done);
+      box-shadow: none !important;
+      cursor: default !important;
     }
 
     .future {
-      opacity: 0.5;
+      opacity: 0.45;
+    }
+
+    /* Export button */
+    .export {
+      width: 100%;
+      padding: 14px;
+      border-radius: 18px;
+      border: none;
+      background: var(--base);
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 20px;
+      cursor: pointer;
     }
 
     /* Quote */
     .quote {
-      background: #FFE0B2;
-      border-radius: 24px;
-      padding: 24px;
+      background: var(--base);
+      border-radius: 22px;
+      padding: 22px;
       text-align: center;
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       font-weight: 700;
     }
   </style>
@@ -112,10 +142,11 @@
       <div class="count-circle" id="count">0</div>
     </div>
 
-    <!-- Dates Grid (8 tiles) -->
-    <div class="grid" id="datesGrid">
-      <!-- Date cards will be injected here -->
-    </div>
+    <!-- Grid -->
+    <div class="grid" id="datesGrid"></div>
+
+    <!-- Export -->
+    <button class="export" id="exportBtn">Export Completed Days</button>
 
     <!-- Quote -->
     <div class="quote">
@@ -123,13 +154,15 @@
       You need consistency.”
     </div>
   </div>
-  <script>
+
+<script>
   const TOTAL_TILES = 8;
   const TODAY_INDEX = 3;
   const STORAGE_KEY = "completedDates";
 
   const grid = document.getElementById("datesGrid");
   const countEl = document.getElementById("count");
+  const exportBtn = document.getElementById("exportBtn");
 
   function formatDate(date) {
     const dd = String(date.getDate()).padStart(2, "0");
@@ -163,7 +196,6 @@
       const offset = i - TODAY_INDEX;
       const d = new Date(today);
       d.setDate(today.getDate() + offset);
-
       const key = dateKey(d);
 
       const card = document.createElement("div");
@@ -174,16 +206,16 @@
         <div class="date">${formatDate(d)}</div>
       `;
 
-      // Completed
-      if (completedDates.includes(key)) {
+      const isCompleted = completedDates.includes(key);
+
+      if (isCompleted) {
         card.classList.add("completed");
       }
 
-      // Today (only clickable tile)
       if (offset === 0) {
         card.classList.add("today");
 
-        if (!completedDates.includes(key)) {
+        if (!isCompleted) {
           card.addEventListener("click", () => {
             completedDates.push(key);
             saveCompletedDates(completedDates);
@@ -192,7 +224,6 @@
         }
       }
 
-      // Future
       if (offset > 0) {
         card.classList.add("future");
       }
@@ -201,7 +232,6 @@
     }
   }
 
-  // Midnight auto-refresh
   function scheduleMidnightRefresh() {
     const now = new Date();
     const midnight = new Date();
@@ -212,6 +242,21 @@
       scheduleMidnightRefresh();
     }, midnight - now);
   }
+
+  exportBtn.addEventListener("click", () => {
+    const data = getCompletedDates();
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "completed-days.json";
+    a.click();
+
+    URL.revokeObjectURL(url);
+  });
 
   render();
   scheduleMidnightRefresh();
