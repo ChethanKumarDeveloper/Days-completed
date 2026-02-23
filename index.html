@@ -5,6 +5,7 @@
   <title>Days Completed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#F6E7C1" />
 
@@ -17,9 +18,14 @@
       --muted: #9A9A9A;
     }
 
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body {
       margin: 0;
-      font-family: system-ui, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text);
       display: flex;
@@ -35,6 +41,25 @@
       flex-direction: column;
     }
 
+    /* ---------- AUTH ---------- */
+    .auth {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth button {
+      padding: 16px 22px;
+      border-radius: 999px;
+      border: none;
+      background: var(--card);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* ---------- HEADER ---------- */
     .header {
       background: var(--card);
       border-radius: 26px;
@@ -42,7 +67,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 2rem;
+      line-height: 1.1;
     }
 
     .count {
@@ -57,6 +88,7 @@
       font-weight: 700;
     }
 
+    /* ---------- GRID ---------- */
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -79,14 +111,23 @@
 
     .completed {
       background: var(--done);
+      cursor: default;
     }
 
     .future {
+      color: var(--muted);
       opacity: 0.45;
     }
 
-    button {
-      margin-top: 12px;
+    /* ---------- ACTIONS ---------- */
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .actions button {
+      flex: 1;
       padding: 14px;
       border-radius: 18px;
       border: none;
@@ -95,6 +136,7 @@
       cursor: pointer;
     }
 
+    /* ---------- QUOTE ---------- */
     .quote {
       background: var(--card);
       border-radius: 24px;
@@ -102,7 +144,6 @@
       text-align: center;
       font-size: 1.3rem;
       font-weight: 700;
-      margin-top: 16px;
     }
   </style>
 </head>
@@ -110,11 +151,13 @@
 <body>
 <div class="app">
 
-  <div id="authView">
+  <!-- AUTH VIEW -->
+  <div class="auth" id="authView">
     <button id="loginBtn">Sign in with Google</button>
   </div>
 
-  <div id="appView" style="display:none;">
+  <!-- APP VIEW -->
+  <div id="appView" style="display:none; flex-direction:column; flex:1;">
     <div class="header">
       <h1>Days<br>Completed</h1>
       <div class="count" id="count">0</div>
@@ -122,7 +165,10 @@
 
     <div class="grid" id="grid"></div>
 
-    <button id="logoutBtn">Logout</button>
+    <div class="actions">
+      <button id="downloadBtn">Download</button>
+      <button id="logoutBtn">Logout</button>
+    </div>
 
     <div class="quote">
       “You don’t need motivation.<br>
@@ -132,12 +178,26 @@
 
 </div>
 
-<!-- Firebase SDK -->
+<!-- ---------- FIREBASE ---------- -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithRedirect,
+    getRedirectResult,
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc,
+    updateDoc
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+  /* 🔥 YOUR FIREBASE CONFIG */
   const firebaseConfig = {
     apiKey: "AIzaSyC2eBGQa-QrmzzabyGabU6e3vt9UomlI7c",
     authDomain: "completed-days.firebaseapp.com",
@@ -152,11 +212,20 @@
   const db = getFirestore(app);
   const provider = new GoogleAuthProvider();
 
-  const TOTAL = 10;
+  const TOTAL_TILES = 10;
   const TODAY_INDEX = 4;
 
+  const authView = document.getElementById("authView");
+  const appView = document.getElementById("appView");
   const grid = document.getElementById("grid");
   const countEl = document.getElementById("count");
+
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const downloadBtn = document.getElementById("downloadBtn");
+
+  loginBtn.onclick = () => signInWithRedirect(auth, provider);
+  logoutBtn.onclick = () => signOut(auth);
 
   function ymd(d) {
     return d.toISOString().split("T")[0];
@@ -164,15 +233,17 @@
 
   async function render(user) {
     grid.innerHTML = "";
+
     const ref = doc(db, "users", user.uid);
     const snap = await getDoc(ref);
-    const data = snap.exists() ? snap.data().completedDates : [];
+    const completed = snap.data().completedDates || [];
 
-    countEl.textContent = data.length;
+    countEl.textContent = completed.length;
 
-    const today = new Date(); today.setHours(0,0,0,0);
+    const today = new Date();
+    today.setHours(0,0,0,0);
 
-    for (let i = 0; i < TOTAL; i++) {
+    for (let i = 0; i < TOTAL_TILES; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i - TODAY_INDEX);
       const key = ymd(d);
@@ -181,13 +252,13 @@
       el.className = "day";
       el.textContent = d.toLocaleDateString();
 
-      if (data.includes(key)) {
+      if (completed.includes(key)) {
         el.classList.add("completed");
       } else if (i === TODAY_INDEX) {
         el.classList.add("today");
         el.onclick = async () => {
           await updateDoc(ref, {
-            completedDates: [...data, key]
+            completedDates: [...completed, key]
           });
           render(user);
         };
@@ -199,16 +270,30 @@
     }
   }
 
-  document.getElementById("loginBtn").onclick = () =>
-    signInWithPopup(auth, provider);
+  downloadBtn.onclick = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
 
-  document.getElementById("logoutBtn").onclick = () =>
-    signOut(auth);
+    const ref = doc(db, "users", user.uid);
+    const snap = await getDoc(ref);
+    const data = snap.data().completedDates || [];
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json"
+    });
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "completed-days.json";
+    a.click();
+  };
+
+  getRedirectResult(auth).catch(() => {});
 
   onAuthStateChanged(auth, async user => {
     if (user) {
-      document.getElementById("authView").style.display = "none";
-      document.getElementById("appView").style.display = "block";
+      authView.style.display = "none";
+      appView.style.display = "flex";
 
       const ref = doc(db, "users", user.uid);
       const snap = await getDoc(ref);
@@ -218,8 +303,8 @@
 
       render(user);
     } else {
-      document.getElementById("authView").style.display = "block";
-      document.getElementById("appView").style.display = "none";
+      authView.style.display = "flex";
+      appView.style.display = "none";
     }
   });
 

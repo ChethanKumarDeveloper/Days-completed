@@ -1,5 +1,10 @@
-const CACHE = "days-firebase-v1";
-const FILES = ["/", "/index.html", "/manifest.json", "/icon.png"];
+const CACHE = "days-completed-v3";
+const FILES = [
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/icon.png"
+];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
