@@ -41,11 +41,12 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 16px;
+      gap: 14px;
     }
 
     .login h1 {
       font-size: 2rem;
+      margin-bottom: 4px;
     }
 
     .login input {
@@ -59,10 +60,26 @@
       padding: 16px;
       border-radius: 14px;
       border: none;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .login-btn {
       background: #111;
       color: #fff;
-      font-size: 1.1rem;
-      font-weight: 700;
+    }
+
+    .register-btn {
+      background: #fff;
+      color: #111;
+      border: 1px solid #ccc;
+    }
+
+    .error {
+      color: red;
+      font-size: 0.9rem;
+      min-height: 18px;
     }
 
     /* ---------- HEADER ---------- */
@@ -73,15 +90,14 @@
       margin-bottom: 16px;
     }
 
-    /* 🔥 AVATAR FIX HERE */
     .avatar {
       width: 44px;
       height: 44px;
       border-radius: 50%;
       object-fit: cover;
-      background: #e6e6e6;          /* visible background */
-      border: 1px solid #ddd;       /* subtle border */
-      padding: 4px;                 /* keeps initials centered */
+      background: #e6e6e6;
+      border: 1px solid #ddd;
+      padding: 4px;
     }
 
     .header h2 {
@@ -168,6 +184,7 @@
       border: none;
       background: var(--card);
       font-weight: 700;
+      cursor: pointer;
     }
 
     /* ---------- QUOTE ---------- */
@@ -183,13 +200,14 @@
 <body>
 <div class="app">
 
-  <!-- LOGIN -->
+  <!-- LOGIN / REGISTER -->
   <div class="login" id="login">
     <h1>Login!</h1>
     <input id="email" placeholder="Email" />
-    <input id="password" type="password" />
-    <button id="loginBtn">Login</button>
-    <div id="error"></div>
+    <input id="password" type="password" placeholder="Password" />
+    <button class="login-btn" id="loginBtn">Login</button>
+    <button class="register-btn" id="registerBtn">Register</button>
+    <div class="error" id="error"></div>
   </div>
 
   <!-- APP -->
@@ -225,8 +243,20 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc,
+    updateDoc
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyC2eBGQa-QrmzzabyGabU6e3vt9UomlI7c",
@@ -246,8 +276,7 @@
   }
 
   function setUserAvatar(user) {
-    const seed = user.uid;
-    avatar.src = `https://api.dicebear.com/7.x/initials/svg?seed=${seed}`;
+    avatar.src = `https://api.dicebear.com/7.x/initials/svg?seed=${user.uid}`;
   }
 
   async function render(user) {
@@ -291,8 +320,18 @@
   }
 
   loginBtn.onclick = async () => {
+    error.textContent = "";
     try {
       await signInWithEmailAndPassword(auth, email.value, password.value);
+    } catch (e) {
+      error.textContent = e.message;
+    }
+  };
+
+  registerBtn.onclick = async () => {
+    error.textContent = "";
+    try {
+      await createUserWithEmailAndPassword(auth, email.value, password.value);
     } catch (e) {
       error.textContent = e.message;
     }
