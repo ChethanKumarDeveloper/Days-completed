@@ -5,7 +5,7 @@
   <title>Days Completed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- ANDROID STATUS BAR COLOR -->
+  <!-- Android status bar -->
   <meta name="theme-color" content="#f3f3f3" />
 
   <style>
@@ -77,6 +77,7 @@
       width: 44px;
       height: 44px;
       border-radius: 50%;
+      object-fit: cover;
       background: #ddd;
     }
 
@@ -111,14 +112,12 @@
       background: var(--primary);
     }
 
-    /* ---------- CONTENT (SCROLLABLE) ---------- */
+    /* ---------- CONTENT ---------- */
     .content {
       flex: 1;
       overflow-y: auto;
-      padding-bottom: 8px;
     }
 
-    /* ---------- GRID ---------- */
     .grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -193,7 +192,7 @@
   <!-- APP -->
   <div id="appView" style="display:none;">
     <div class="header">
-      <div class="avatar"></div>
+      <img id="avatar" class="avatar" alt="Avatar" />
       <h2 id="greet">Hi</h2>
     </div>
 
@@ -236,11 +235,17 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  const TOTAL = 15;          // 🔥 MORE DAYS
+  const TOTAL_DAYS = 15;
   const TODAY_INDEX = 7;
 
   function ymd(d) {
     return d.toISOString().split("T")[0];
+  }
+
+  function setUserAvatar(user) {
+    const seed = user.uid;
+    const url = `https://api.dicebear.com/7.x/initials/svg?seed=${seed}&backgroundColor=f3f3f3`;
+    avatar.src = url;
   }
 
   async function render(user) {
@@ -256,7 +261,7 @@
     const today = new Date();
     today.setHours(0,0,0,0);
 
-    for (let i = 0; i < TOTAL; i++) {
+    for (let i = 0; i < TOTAL_DAYS; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i - TODAY_INDEX);
       const key = ymd(d);
@@ -293,6 +298,22 @@
 
   logout.onclick = () => signOut(auth);
 
+  download.onclick = async () => {
+    const user = auth.currentUser;
+    const ref = doc(db, "users", user.uid);
+    const snap = await getDoc(ref);
+
+    const blob = new Blob(
+      [JSON.stringify(snap.data().completedDates || [], null, 2)],
+      { type: "application/json" }
+    );
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "completed-days.json";
+    a.click();
+  };
+
   onAuthStateChanged(auth, async user => {
     if (!user) {
       login.style.display = "flex";
@@ -303,6 +324,7 @@
     login.style.display = "none";
     appView.style.display = "block";
     greet.textContent = `Hi, ${user.email.split("@")[0]}`;
+    setUserAvatar(user);
 
     const ref = doc(db, "users", user.uid);
     if (!(await getDoc(ref)).exists()) {
