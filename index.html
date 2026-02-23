@@ -3,127 +3,177 @@
 <head>
   <meta charset="UTF-8" />
   <title>Days Completed</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#FFE0B2">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#F6E7C1" />
 
   <style>
     :root {
-      --base: #FFE0B2;
+      --bg: #FFFDF8;
+      --card: #F6E7C1;
       --done: #B9F871;
-      --text: #111;
+      --text: #1A1A1A;
+      --muted: #9A9A9A;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #fff;
+      background: var(--bg);
       color: var(--text);
-      padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
     }
 
-    .container {
+    .app {
+      width: 100%;
       max-width: 420px;
-      margin: auto;
+      padding: 20px 16px 24px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
+    /* Header */
     .header {
-      background: var(--base);
-      border-radius: 22px;
-      padding: 18px;
+      background: var(--card);
+      border-radius: 26px;
+      padding: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
 
     .header h1 {
       margin: 0;
-      font-size: 1.8rem;
+      font-size: 2rem;
       line-height: 1.1;
     }
 
     .count {
-      width: 56px;
-      height: 56px;
+      width: 64px;
+      height: 64px;
       background: var(--done);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 2rem;
       font-weight: 700;
-      font-size: 1.8rem;
     }
 
+    /* Main content grows to fill screen */
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Grid */
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
-      margin-bottom: 16px;
+      flex-grow: 1;
     }
 
-    .card {
-      background: var(--base);
-      border-radius: 18px;
-      padding: 20px;
+    .day {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 18px 10px;
       text-align: center;
-      font-weight: 700;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .today {
-      box-shadow: 0 0 0 3px var(--text);
+    .day.today {
+      outline: 3px solid var(--text);
       cursor: pointer;
     }
 
-    .completed {
+    .day.completed {
       background: var(--done);
+      outline: none;
       cursor: default;
     }
 
-    .future {
-      opacity: 0.45;
+    .day.future {
+      color: var(--muted);
+      opacity: 0.5;
+    }
+
+    /* Actions */
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin: 18px 0;
     }
 
     button {
-      width: 100%;
+      flex: 1;
       padding: 14px;
       border-radius: 18px;
       border: none;
-      background: var(--base);
+      background: var(--card);
       font-weight: 700;
-      margin-bottom: 12px;
+      font-size: 1rem;
+      cursor: pointer;
     }
 
+    /* Quote */
+    .quote {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 20px;
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-top: auto;
+    }
+
+    /* Archive */
     .archive {
       display: none;
+      flex: 1;
+      flex-direction: column;
     }
 
     .month {
-      background: var(--base);
+      background: var(--card);
       border-radius: 18px;
       padding: 14px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      font-weight: 600;
     }
   </style>
 </head>
 
 <body>
-<div class="container">
+<div class="app">
 
   <div class="header">
     <h1>Days<br>Completed</h1>
     <div class="count" id="count">0</div>
   </div>
 
-  <div id="mainView">
+  <div class="content" id="mainView">
     <div class="grid" id="grid"></div>
-    <button id="archiveBtn">View Archive</button>
+
+    <div class="actions">
+      <button id="archiveBtn">View Archive</button>
+      <button id="downloadBtn">Download</button>
+    </div>
   </div>
 
   <div class="archive" id="archiveView">
@@ -131,23 +181,30 @@
     <div id="months"></div>
   </div>
 
+  <div class="quote">
+    “You don’t need motivation.<br>
+    You need consistency.”
+  </div>
+
 </div>
 
 <script>
-  const TOTAL = 8;
-  const TODAY_INDEX = 3;
+  const TOTAL_TILES = 10;   // fills screen better
+  const TODAY_INDEX = 4;
   const KEY = "completedDates";
 
   const grid = document.getElementById("grid");
   const countEl = document.getElementById("count");
-  const archiveView = document.getElementById("archiveView");
   const mainView = document.getElementById("mainView");
+  const archiveView = document.getElementById("archiveView");
   const monthsEl = document.getElementById("months");
 
   const getData = () => JSON.parse(localStorage.getItem(KEY)) || [];
   const saveData = d => localStorage.setItem(KEY, JSON.stringify(d));
 
-  function ymd(d) { return d.toISOString().split("T")[0]; }
+  function key(d) {
+    return d.toISOString().split("T")[0];
+  }
 
   function render() {
     grid.innerHTML = "";
@@ -155,24 +212,27 @@
     const data = getData();
     countEl.textContent = data.length;
 
-    for (let i=0;i<TOTAL;i++) {
+    for (let i = 0; i < TOTAL_TILES; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i - TODAY_INDEX);
-      const key = ymd(d);
+      const k = key(d);
 
       const el = document.createElement("div");
-      el.className = "card";
+      el.className = "day";
       el.textContent = d.toLocaleDateString();
 
-      if (data.includes(key)) el.classList.add("completed");
-      else if (i === TODAY_INDEX) {
+      if (data.includes(k)) {
+        el.classList.add("completed");
+      } else if (i === TODAY_INDEX) {
         el.classList.add("today");
         el.onclick = () => {
-          data.push(key);
+          data.push(k);
           saveData(data);
           render();
         };
-      } else if (i > TODAY_INDEX) el.classList.add("future");
+      } else if (i > TODAY_INDEX) {
+        el.classList.add("future");
+      }
 
       grid.appendChild(el);
     }
@@ -181,36 +241,45 @@
   function renderArchive() {
     monthsEl.innerHTML = "";
     const data = getData();
-
     const grouped = {};
+
     data.forEach(d => {
       const m = d.slice(0,7);
-      grouped[m] = grouped[m] || [];
-      grouped[m].push(d);
+      grouped[m] = (grouped[m] || 0) + 1;
     });
 
     Object.keys(grouped).sort().reverse().forEach(m => {
       const div = document.createElement("div");
       div.className = "month";
-      div.innerHTML = `<strong>${m}</strong><br>${grouped[m].length} days`;
+      div.textContent = `${m} — ${grouped[m]} days`;
       monthsEl.appendChild(div);
     });
   }
 
   document.getElementById("archiveBtn").onclick = () => {
     mainView.style.display = "none";
-    archiveView.style.display = "block";
+    archiveView.style.display = "flex";
     renderArchive();
   };
 
   document.getElementById("backBtn").onclick = () => {
     archiveView.style.display = "none";
-    mainView.style.display = "block";
+    mainView.style.display = "flex";
+  };
+
+  document.getElementById("downloadBtn").onclick = () => {
+    const blob = new Blob(
+      [JSON.stringify(getData(), null, 2)],
+      { type: "application/json" }
+    );
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "completed-days.json";
+    a.click();
   };
 
   render();
 
-  // PWA
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js");
   }

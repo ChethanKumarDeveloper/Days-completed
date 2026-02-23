@@ -1,5 +1,5 @@
-const CACHE = "days-v1";
-const ASSETS = [
+const CACHE = "days-completed-v2";
+const FILES = [
   "/",
   "/index.html",
   "/manifest.json",
@@ -8,7 +8,7 @@ const ASSETS = [
 
 self.addEventListener("install", e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS))
+    caches.open(CACHE).then(c => c.addAll(FILES))
   );
 });
 
