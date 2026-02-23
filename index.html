@@ -75,7 +75,7 @@
     .error {
       color: red;
       font-size: 0.9rem;
-      min-height: 20px;
+      min-height: 22px;
     }
 
     /* ---------- HEADER ---------- */
@@ -266,6 +266,18 @@
   const TOTAL_DAYS = 15;
   const TODAY_INDEX = 7;
 
+  function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function showError(msg) {
+    error.textContent = msg;
+  }
+
+  function clearError() {
+    error.textContent = "";
+  }
+
   function ymd(d) {
     return d.toISOString().split("T")[0];
   }
@@ -315,18 +327,26 @@
   }
 
   loginBtn.onclick = async () => {
+    clearError();
+    if (!isValidEmail(email.value)) return showError("Enter a valid email");
+    if (password.value.length < 6) return showError("Password must be at least 6 characters");
+
     try {
       await signInWithEmailAndPassword(auth, email.value, password.value);
     } catch (e) {
-      error.textContent = e.message;
+      showError(e.message);
     }
   };
 
   registerBtn.onclick = async () => {
+    clearError();
+    if (!isValidEmail(email.value)) return showError("Enter a valid email");
+    if (password.value.length < 6) return showError("Password must be at least 6 characters");
+
     try {
       await createUserWithEmailAndPassword(auth, email.value, password.value);
     } catch (e) {
-      error.textContent = e.message;
+      showError(e.message);
     }
   };
 
