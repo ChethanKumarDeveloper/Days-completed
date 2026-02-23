@@ -73,12 +73,15 @@
       margin-bottom: 16px;
     }
 
+    /* 🔥 AVATAR FIX HERE */
     .avatar {
       width: 44px;
       height: 44px;
       border-radius: 50%;
       object-fit: cover;
-      background: #ddd;
+      background: #e6e6e6;          /* visible background */
+      border: 1px solid #ddd;       /* subtle border */
+      padding: 4px;                 /* keeps initials centered */
     }
 
     .header h2 {
@@ -184,7 +187,7 @@
   <div class="login" id="login">
     <h1>Login!</h1>
     <input id="email" placeholder="Email" />
-    <input id="password" type="password" placeholder="Password" />
+    <input id="password" type="password" />
     <button id="loginBtn">Login</button>
     <div id="error"></div>
   </div>
@@ -244,8 +247,7 @@
 
   function setUserAvatar(user) {
     const seed = user.uid;
-    const url = `https://api.dicebear.com/7.x/initials/svg?seed=${seed}&backgroundColor=f3f3f3`;
-    avatar.src = url;
+    avatar.src = `https://api.dicebear.com/7.x/initials/svg?seed=${seed}`;
   }
 
   async function render(user) {
