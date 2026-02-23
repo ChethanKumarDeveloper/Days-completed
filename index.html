@@ -20,12 +20,11 @@
 
     * {
       box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
     }
 
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
       display: flex;
@@ -41,22 +40,35 @@
       flex-direction: column;
     }
 
-    /* ---------- AUTH ---------- */
-    .auth {
+    /* ---------- LOGIN ---------- */
+    .login {
       flex: 1;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       justify-content: center;
+      gap: 12px;
     }
 
-    .auth button {
-      padding: 16px 22px;
-      border-radius: 999px;
+    .login input {
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid #ddd;
+      font-size: 1rem;
+    }
+
+    .login button {
+      padding: 14px;
+      border-radius: 14px;
       border: none;
       background: var(--card);
-      font-size: 1rem;
       font-weight: 700;
+      font-size: 1rem;
       cursor: pointer;
+    }
+
+    .error {
+      color: red;
+      font-size: 0.9rem;
     }
 
     /* ---------- HEADER ---------- */
@@ -68,12 +80,6 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 18px;
-    }
-
-    .header h1 {
-      margin: 0;
-      font-size: 2rem;
-      line-height: 1.1;
     }
 
     .count {
@@ -111,12 +117,11 @@
 
     .completed {
       background: var(--done);
-      cursor: default;
     }
 
     .future {
-      color: var(--muted);
       opacity: 0.45;
+      color: var(--muted);
     }
 
     /* ---------- ACTIONS ---------- */
@@ -136,7 +141,6 @@
       cursor: pointer;
     }
 
-    /* ---------- QUOTE ---------- */
     .quote {
       background: var(--card);
       border-radius: 24px;
@@ -151,9 +155,12 @@
 <body>
 <div class="app">
 
-  <!-- AUTH VIEW -->
-  <div class="auth" id="authView">
-    <button id="loginBtn">Sign in with Google</button>
+  <!-- LOGIN VIEW -->
+  <div class="login" id="loginView">
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button id="loginBtn">Login</button>
+    <div class="error" id="error"></div>
   </div>
 
   <!-- APP VIEW -->
@@ -178,14 +185,11 @@
 
 </div>
 
-<!-- 🔥 FIREBASE + LOGIC -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import {
     getAuth,
-    GoogleAuthProvider,
-    signInWithRedirect,
-    getRedirectResult,
+    signInWithEmailAndPassword,
     onAuthStateChanged,
     signOut
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -197,7 +201,6 @@
     updateDoc
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  /* 🔥 Firebase config */
   const firebaseConfig = {
     apiKey: "AIzaSyC2eBGQa-QrmzzabyGabU6e3vt9UomlI7c",
     authDomain: "completed-days.firebaseapp.com",
@@ -210,21 +213,31 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const provider = new GoogleAuthProvider();
 
-  const authView = document.getElementById("authView");
+  const loginView = document.getElementById("loginView");
   const appView = document.getElementById("appView");
-  const loginBtn = document.getElementById("loginBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-  const downloadBtn = document.getElementById("downloadBtn");
+  const errorEl = document.getElementById("error");
+
   const grid = document.getElementById("grid");
   const countEl = document.getElementById("count");
 
   const TOTAL_TILES = 10;
   const TODAY_INDEX = 4;
 
-  loginBtn.onclick = () => signInWithRedirect(auth, provider);
-  logoutBtn.onclick = () => signOut(auth);
+  document.getElementById("loginBtn").onclick = async () => {
+    errorEl.textContent = "";
+    try {
+      await signInWithEmailAndPassword(
+        auth,
+        document.getElementById("email").value,
+        document.getElementById("password").value
+      );
+    } catch (e) {
+      errorEl.textContent = e.message;
+    }
+  };
+
+  document.getElementById("logoutBtn").onclick = () => signOut(auth);
 
   function ymd(d) {
     return d.toISOString().split("T")[0];
@@ -269,17 +282,15 @@
     }
   }
 
-  downloadBtn.onclick = async () => {
+  document.getElementById("downloadBtn").onclick = async () => {
     const user = auth.currentUser;
-    if (!user) return;
-
     const ref = doc(db, "users", user.uid);
     const snap = await getDoc(ref);
-    const data = snap.data().completedDates || [];
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json"
-    });
+    const blob = new Blob(
+      [JSON.stringify(snap.data().completedDates || [], null, 2)],
+      { type: "application/json" }
+    );
 
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -287,17 +298,14 @@
     a.click();
   };
 
-  /* 🔑 Handle redirect */
-  getRedirectResult(auth).catch(() => {});
-
   onAuthStateChanged(auth, async user => {
     if (!user) {
-      authView.style.display = "flex";
+      loginView.style.display = "flex";
       appView.style.display = "none";
       return;
     }
 
-    authView.style.display = "none";
+    loginView.style.display = "none";
     appView.style.display = "flex";
 
     const ref = doc(db, "users", user.uid);
@@ -308,10 +316,6 @@
 
     render(user);
   });
-
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js");
-  }
 </script>
 </body>
 </html>
