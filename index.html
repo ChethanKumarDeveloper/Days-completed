@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <title>Days Completed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Android status bar -->
   <meta name="theme-color" content="#f3f3f3" />
 
   <style>
@@ -46,7 +44,7 @@
 
     .login h1 {
       font-size: 2rem;
-      margin-bottom: 4px;
+      margin-bottom: 10px;
     }
 
     .login input {
@@ -60,26 +58,24 @@
       padding: 16px;
       border-radius: 14px;
       border: none;
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 700;
-      cursor: pointer;
     }
 
-    .login-btn {
+    .primary-btn {
       background: #111;
       color: #fff;
     }
 
-    .register-btn {
-      background: #fff;
+    .secondary-btn {
+      background: #ddd;
       color: #111;
-      border: 1px solid #ccc;
     }
 
     .error {
       color: red;
       font-size: 0.9rem;
-      min-height: 18px;
+      min-height: 20px;
     }
 
     /* ---------- HEADER ---------- */
@@ -184,7 +180,6 @@
       border: none;
       background: var(--card);
       font-weight: 700;
-      cursor: pointer;
     }
 
     /* ---------- QUOTE ---------- */
@@ -200,13 +195,13 @@
 <body>
 <div class="app">
 
-  <!-- LOGIN / REGISTER -->
+  <!-- LOGIN -->
   <div class="login" id="login">
-    <h1>Login!</h1>
+    <h1>Login</h1>
     <input id="email" placeholder="Email" />
     <input id="password" type="password" placeholder="Password" />
-    <button class="login-btn" id="loginBtn">Login</button>
-    <button class="register-btn" id="registerBtn">Register</button>
+    <button id="loginBtn" class="primary-btn">Login</button>
+    <button id="registerBtn" class="secondary-btn">Register</button>
     <div class="error" id="error"></div>
   </div>
 
@@ -320,7 +315,6 @@
   }
 
   loginBtn.onclick = async () => {
-    error.textContent = "";
     try {
       await signInWithEmailAndPassword(auth, email.value, password.value);
     } catch (e) {
@@ -329,7 +323,6 @@
   };
 
   registerBtn.onclick = async () => {
-    error.textContent = "";
     try {
       await createUserWithEmailAndPassword(auth, email.value, password.value);
     } catch (e) {
@@ -338,22 +331,6 @@
   };
 
   logout.onclick = () => signOut(auth);
-
-  download.onclick = async () => {
-    const user = auth.currentUser;
-    const ref = doc(db, "users", user.uid);
-    const snap = await getDoc(ref);
-
-    const blob = new Blob(
-      [JSON.stringify(snap.data().completedDates || [], null, 2)],
-      { type: "application/json" }
-    );
-
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "completed-days.json";
-    a.click();
-  };
 
   onAuthStateChanged(auth, async user => {
     if (!user) {
