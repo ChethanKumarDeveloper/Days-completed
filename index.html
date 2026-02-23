@@ -122,7 +122,99 @@
       “You don’t need motivation.<br>
       You need consistency.”
     </div>
-
   </div>
+  <script>
+  const TOTAL_TILES = 8;
+  const TODAY_INDEX = 3;
+  const STORAGE_KEY = "completedDates";
+
+  const grid = document.getElementById("datesGrid");
+  const countEl = document.getElementById("count");
+
+  function formatDate(date) {
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    return `${dd}.${mm}.${yyyy}`;
+  }
+
+  function dateKey(date) {
+    return date.toISOString().split("T")[0];
+  }
+
+  function getCompletedDates() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  }
+
+  function saveCompletedDates(arr) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  }
+
+  function render() {
+    grid.innerHTML = "";
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const completedDates = getCompletedDates();
+    countEl.textContent = completedDates.length;
+
+    for (let i = 0; i < TOTAL_TILES; i++) {
+      const offset = i - TODAY_INDEX;
+      const d = new Date(today);
+      d.setDate(today.getDate() + offset);
+
+      const key = dateKey(d);
+
+      const card = document.createElement("div");
+      card.className = "date-card";
+
+      card.innerHTML = `
+        <span>Date</span>
+        <div class="date">${formatDate(d)}</div>
+      `;
+
+      // Completed
+      if (completedDates.includes(key)) {
+        card.classList.add("completed");
+      }
+
+      // Today (only clickable tile)
+      if (offset === 0) {
+        card.classList.add("today");
+
+        if (!completedDates.includes(key)) {
+          card.addEventListener("click", () => {
+            completedDates.push(key);
+            saveCompletedDates(completedDates);
+            render();
+          });
+        }
+      }
+
+      // Future
+      if (offset > 0) {
+        card.classList.add("future");
+      }
+
+      grid.appendChild(card);
+    }
+  }
+
+  // Midnight auto-refresh
+  function scheduleMidnightRefresh() {
+    const now = new Date();
+    const midnight = new Date();
+    midnight.setHours(24, 0, 0, 0);
+
+    setTimeout(() => {
+      render();
+      scheduleMidnightRefresh();
+    }, midnight - now);
+  }
+
+  render();
+  scheduleMidnightRefresh();
+</script>
 </body>
 </html>
