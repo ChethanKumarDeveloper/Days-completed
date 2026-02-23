@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <title>Days Completed</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#FFE0B2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <style>
     :root {
@@ -12,27 +18,21 @@
       --text: #111;
     }
 
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: #fff;
       color: var(--text);
-      display: flex;
-      justify-content: center;
-      padding: 16px;
+      padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
     }
 
     .container {
-      width: 100%;
       max-width: 420px;
+      margin: auto;
     }
 
-    /* Header */
     .header {
       background: var(--base);
       border-radius: 22px;
@@ -40,16 +40,16 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .header h1 {
-      font-size: 1.8rem;
       margin: 0;
+      font-size: 1.8rem;
       line-height: 1.1;
     }
 
-    .count-circle {
+    .count {
       width: 56px;
       height: 56px;
       background: var(--done);
@@ -57,209 +57,163 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.8rem;
       font-weight: 700;
+      font-size: 1.8rem;
     }
 
-    /* Grid */
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
-    .date-card {
+    .card {
       background: var(--base);
       border-radius: 18px;
-      padding: 20px 12px;
+      padding: 20px;
       text-align: center;
       font-weight: 700;
-      user-select: none;
     }
 
-    .date-card span {
-      display: block;
-      font-size: 0.85rem;
-      margin-bottom: 4px;
-    }
-
-    .date {
-      font-size: 1.25rem;
-    }
-
-    /* States */
     .today {
-      cursor: pointer;
       box-shadow: 0 0 0 3px var(--text);
-    }
-
-    .today:not(.completed):active {
-      transform: scale(0.98);
+      cursor: pointer;
     }
 
     .completed {
       background: var(--done);
-      box-shadow: none !important;
-      cursor: default !important;
+      cursor: default;
     }
 
     .future {
       opacity: 0.45;
     }
 
-    /* Export button */
-    .export {
+    button {
       width: 100%;
       padding: 14px;
       border-radius: 18px;
       border: none;
       background: var(--base);
       font-weight: 700;
-      font-size: 1rem;
-      margin-bottom: 20px;
-      cursor: pointer;
+      margin-bottom: 12px;
     }
 
-    /* Quote */
-    .quote {
+    .archive {
+      display: none;
+    }
+
+    .month {
       background: var(--base);
-      border-radius: 22px;
-      padding: 22px;
-      text-align: center;
-      font-size: 1.3rem;
-      font-weight: 700;
+      border-radius: 18px;
+      padding: 14px;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
+<div class="container">
 
-    <!-- Header -->
-    <div class="header">
-      <h1>Days<br>Completed</h1>
-      <div class="count-circle" id="count">0</div>
-    </div>
-
-    <!-- Grid -->
-    <div class="grid" id="datesGrid"></div>
-
-    <!-- Export -->
-    <button class="export" id="exportBtn">Export Completed Days</button>
-
-    <!-- Quote -->
-    <div class="quote">
-      “You don’t need motivation.<br>
-      You need consistency.”
-    </div>
+  <div class="header">
+    <h1>Days<br>Completed</h1>
+    <div class="count" id="count">0</div>
   </div>
 
+  <div id="mainView">
+    <div class="grid" id="grid"></div>
+    <button id="archiveBtn">View Archive</button>
+  </div>
+
+  <div class="archive" id="archiveView">
+    <button id="backBtn">← Back</button>
+    <div id="months"></div>
+  </div>
+
+</div>
+
 <script>
-  const TOTAL_TILES = 8;
+  const TOTAL = 8;
   const TODAY_INDEX = 3;
-  const STORAGE_KEY = "completedDates";
+  const KEY = "completedDates";
 
-  const grid = document.getElementById("datesGrid");
+  const grid = document.getElementById("grid");
   const countEl = document.getElementById("count");
-  const exportBtn = document.getElementById("exportBtn");
+  const archiveView = document.getElementById("archiveView");
+  const mainView = document.getElementById("mainView");
+  const monthsEl = document.getElementById("months");
 
-  function formatDate(date) {
-    const dd = String(date.getDate()).padStart(2, "0");
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const yyyy = date.getFullYear();
-    return `${dd}.${mm}.${yyyy}`;
-  }
+  const getData = () => JSON.parse(localStorage.getItem(KEY)) || [];
+  const saveData = d => localStorage.setItem(KEY, JSON.stringify(d));
 
-  function dateKey(date) {
-    return date.toISOString().split("T")[0];
-  }
-
-  function getCompletedDates() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  }
-
-  function saveCompletedDates(arr) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-  }
+  function ymd(d) { return d.toISOString().split("T")[0]; }
 
   function render() {
     grid.innerHTML = "";
+    const today = new Date(); today.setHours(0,0,0,0);
+    const data = getData();
+    countEl.textContent = data.length;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const completedDates = getCompletedDates();
-    countEl.textContent = completedDates.length;
-
-    for (let i = 0; i < TOTAL_TILES; i++) {
-      const offset = i - TODAY_INDEX;
+    for (let i=0;i<TOTAL;i++) {
       const d = new Date(today);
-      d.setDate(today.getDate() + offset);
-      const key = dateKey(d);
+      d.setDate(today.getDate() + i - TODAY_INDEX);
+      const key = ymd(d);
 
-      const card = document.createElement("div");
-      card.className = "date-card";
+      const el = document.createElement("div");
+      el.className = "card";
+      el.textContent = d.toLocaleDateString();
 
-      card.innerHTML = `
-        <span>Date</span>
-        <div class="date">${formatDate(d)}</div>
-      `;
+      if (data.includes(key)) el.classList.add("completed");
+      else if (i === TODAY_INDEX) {
+        el.classList.add("today");
+        el.onclick = () => {
+          data.push(key);
+          saveData(data);
+          render();
+        };
+      } else if (i > TODAY_INDEX) el.classList.add("future");
 
-      const isCompleted = completedDates.includes(key);
-
-      if (isCompleted) {
-        card.classList.add("completed");
-      }
-
-      if (offset === 0) {
-        card.classList.add("today");
-
-        if (!isCompleted) {
-          card.addEventListener("click", () => {
-            completedDates.push(key);
-            saveCompletedDates(completedDates);
-            render();
-          });
-        }
-      }
-
-      if (offset > 0) {
-        card.classList.add("future");
-      }
-
-      grid.appendChild(card);
+      grid.appendChild(el);
     }
   }
 
-  function scheduleMidnightRefresh() {
-    const now = new Date();
-    const midnight = new Date();
-    midnight.setHours(24, 0, 0, 0);
+  function renderArchive() {
+    monthsEl.innerHTML = "";
+    const data = getData();
 
-    setTimeout(() => {
-      render();
-      scheduleMidnightRefresh();
-    }, midnight - now);
+    const grouped = {};
+    data.forEach(d => {
+      const m = d.slice(0,7);
+      grouped[m] = grouped[m] || [];
+      grouped[m].push(d);
+    });
+
+    Object.keys(grouped).sort().reverse().forEach(m => {
+      const div = document.createElement("div");
+      div.className = "month";
+      div.innerHTML = `<strong>${m}</strong><br>${grouped[m].length} days`;
+      monthsEl.appendChild(div);
+    });
   }
 
-  exportBtn.addEventListener("click", () => {
-    const data = getCompletedDates();
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json"
-    });
-    const url = URL.createObjectURL(blob);
+  document.getElementById("archiveBtn").onclick = () => {
+    mainView.style.display = "none";
+    archiveView.style.display = "block";
+    renderArchive();
+  };
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "completed-days.json";
-    a.click();
-
-    URL.revokeObjectURL(url);
-  });
+  document.getElementById("backBtn").onclick = () => {
+    archiveView.style.display = "none";
+    mainView.style.display = "block";
+  };
 
   render();
-  scheduleMidnightRefresh();
+
+  // PWA
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js");
+  }
 </script>
 </body>
 </html>
