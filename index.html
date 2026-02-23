@@ -5,7 +5,6 @@
   <title>Days Completed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#F6E7C1" />
 
@@ -18,31 +17,24 @@
       --muted: #9A9A9A;
     }
 
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
       display: flex;
       justify-content: center;
     }
 
     .app {
-      width: 100%;
       max-width: 420px;
+      width: 100%;
+      min-height: 100vh;
       padding: 20px 16px 24px;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
     }
 
-    /* Header */
     .header {
       background: var(--card);
       border-radius: 26px;
@@ -51,12 +43,6 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 20px;
-    }
-
-    .header h1 {
-      margin: 0;
-      font-size: 2rem;
-      line-height: 1.1;
     }
 
     .count {
@@ -71,67 +57,44 @@
       font-weight: 700;
     }
 
-    /* Main content grows to fill screen */
-    .content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Grid */
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
-      flex-grow: 1;
+      flex: 1;
     }
 
     .day {
       background: var(--card);
       border-radius: 20px;
-      padding: 18px 10px;
+      padding: 18px;
       text-align: center;
       font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
-    .day.today {
+    .today {
       outline: 3px solid var(--text);
       cursor: pointer;
     }
 
-    .day.completed {
+    .completed {
       background: var(--done);
-      outline: none;
-      cursor: default;
     }
 
-    .day.future {
-      color: var(--muted);
-      opacity: 0.5;
-    }
-
-    /* Actions */
-    .actions {
-      display: flex;
-      gap: 12px;
-      margin: 18px 0;
+    .future {
+      opacity: 0.45;
     }
 
     button {
-      flex: 1;
+      margin-top: 12px;
       padding: 14px;
       border-radius: 18px;
       border: none;
       background: var(--card);
       font-weight: 700;
-      font-size: 1rem;
       cursor: pointer;
     }
 
-    /* Quote */
     .quote {
       background: var(--card);
       border-radius: 24px;
@@ -139,22 +102,7 @@
       text-align: center;
       font-size: 1.3rem;
       font-weight: 700;
-      margin-top: auto;
-    }
-
-    /* Archive */
-    .archive {
-      display: none;
-      flex: 1;
-      flex-direction: column;
-    }
-
-    .month {
-      background: var(--card);
-      border-radius: 18px;
-      padding: 14px;
-      margin-bottom: 12px;
-      font-weight: 600;
+      margin-top: 16px;
     }
   </style>
 </head>
@@ -162,73 +110,86 @@
 <body>
 <div class="app">
 
-  <div class="header">
-    <h1>Days<br>Completed</h1>
-    <div class="count" id="count">0</div>
+  <div id="authView">
+    <button id="loginBtn">Sign in with Google</button>
   </div>
 
-  <div class="content" id="mainView">
+  <div id="appView" style="display:none;">
+    <div class="header">
+      <h1>Days<br>Completed</h1>
+      <div class="count" id="count">0</div>
+    </div>
+
     <div class="grid" id="grid"></div>
 
-    <div class="actions">
-      <button id="archiveBtn">View Archive</button>
-      <button id="downloadBtn">Download</button>
+    <button id="logoutBtn">Logout</button>
+
+    <div class="quote">
+      “You don’t need motivation.<br>
+      You need consistency.”
     </div>
-  </div>
-
-  <div class="archive" id="archiveView">
-    <button id="backBtn">← Back</button>
-    <div id="months"></div>
-  </div>
-
-  <div class="quote">
-    “You don’t need motivation.<br>
-    You need consistency.”
   </div>
 
 </div>
 
-<script>
-  const TOTAL_TILES = 10;   // fills screen better
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC2eBGQa-QrmzzabyGabU6e3vt9UomlI7c",
+    authDomain: "completed-days.firebaseapp.com",
+    projectId: "completed-days",
+    storageBucket: "completed-days.firebasestorage.app",
+    messagingSenderId: "137286997518",
+    appId: "1:137286997518:web:221c7010e09d014bc28e5f"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  const TOTAL = 10;
   const TODAY_INDEX = 4;
-  const KEY = "completedDates";
 
   const grid = document.getElementById("grid");
   const countEl = document.getElementById("count");
-  const mainView = document.getElementById("mainView");
-  const archiveView = document.getElementById("archiveView");
-  const monthsEl = document.getElementById("months");
 
-  const getData = () => JSON.parse(localStorage.getItem(KEY)) || [];
-  const saveData = d => localStorage.setItem(KEY, JSON.stringify(d));
-
-  function key(d) {
+  function ymd(d) {
     return d.toISOString().split("T")[0];
   }
 
-  function render() {
+  async function render(user) {
     grid.innerHTML = "";
-    const today = new Date(); today.setHours(0,0,0,0);
-    const data = getData();
+    const ref = doc(db, "users", user.uid);
+    const snap = await getDoc(ref);
+    const data = snap.exists() ? snap.data().completedDates : [];
+
     countEl.textContent = data.length;
 
-    for (let i = 0; i < TOTAL_TILES; i++) {
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    for (let i = 0; i < TOTAL; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i - TODAY_INDEX);
-      const k = key(d);
+      const key = ymd(d);
 
       const el = document.createElement("div");
       el.className = "day";
       el.textContent = d.toLocaleDateString();
 
-      if (data.includes(k)) {
+      if (data.includes(key)) {
         el.classList.add("completed");
       } else if (i === TODAY_INDEX) {
         el.classList.add("today");
-        el.onclick = () => {
-          data.push(k);
-          saveData(data);
-          render();
+        el.onclick = async () => {
+          await updateDoc(ref, {
+            completedDates: [...data, key]
+          });
+          render(user);
         };
       } else if (i > TODAY_INDEX) {
         el.classList.add("future");
@@ -238,47 +199,29 @@
     }
   }
 
-  function renderArchive() {
-    monthsEl.innerHTML = "";
-    const data = getData();
-    const grouped = {};
+  document.getElementById("loginBtn").onclick = () =>
+    signInWithPopup(auth, provider);
 
-    data.forEach(d => {
-      const m = d.slice(0,7);
-      grouped[m] = (grouped[m] || 0) + 1;
-    });
+  document.getElementById("logoutBtn").onclick = () =>
+    signOut(auth);
 
-    Object.keys(grouped).sort().reverse().forEach(m => {
-      const div = document.createElement("div");
-      div.className = "month";
-      div.textContent = `${m} — ${grouped[m]} days`;
-      monthsEl.appendChild(div);
-    });
-  }
+  onAuthStateChanged(auth, async user => {
+    if (user) {
+      document.getElementById("authView").style.display = "none";
+      document.getElementById("appView").style.display = "block";
 
-  document.getElementById("archiveBtn").onclick = () => {
-    mainView.style.display = "none";
-    archiveView.style.display = "flex";
-    renderArchive();
-  };
+      const ref = doc(db, "users", user.uid);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        await setDoc(ref, { completedDates: [] });
+      }
 
-  document.getElementById("backBtn").onclick = () => {
-    archiveView.style.display = "none";
-    mainView.style.display = "flex";
-  };
-
-  document.getElementById("downloadBtn").onclick = () => {
-    const blob = new Blob(
-      [JSON.stringify(getData(), null, 2)],
-      { type: "application/json" }
-    );
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "completed-days.json";
-    a.click();
-  };
-
-  render();
+      render(user);
+    } else {
+      document.getElementById("authView").style.display = "block";
+      document.getElementById("appView").style.display = "none";
+    }
+  });
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js");
