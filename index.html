@@ -30,12 +30,12 @@
       color: var(--text);
       display: flex;
       justify-content: center;
+      min-height: 100vh;
     }
 
     .app {
-      max-width: 420px;
       width: 100%;
-      min-height: 100vh;
+      max-width: 420px;
       padding: 20px 16px 24px;
       display: flex;
       flex-direction: column;
@@ -178,7 +178,7 @@
 
 </div>
 
-<!-- ---------- FIREBASE ---------- -->
+<!-- 🔥 FIREBASE + LOGIC -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import {
@@ -197,7 +197,7 @@
     updateDoc
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  /* 🔥 YOUR FIREBASE CONFIG */
+  /* 🔥 Firebase config */
   const firebaseConfig = {
     apiKey: "AIzaSyC2eBGQa-QrmzzabyGabU6e3vt9UomlI7c",
     authDomain: "completed-days.firebaseapp.com",
@@ -212,17 +212,16 @@
   const db = getFirestore(app);
   const provider = new GoogleAuthProvider();
 
-  const TOTAL_TILES = 10;
-  const TODAY_INDEX = 4;
-
   const authView = document.getElementById("authView");
   const appView = document.getElementById("appView");
-  const grid = document.getElementById("grid");
-  const countEl = document.getElementById("count");
-
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
   const downloadBtn = document.getElementById("downloadBtn");
+  const grid = document.getElementById("grid");
+  const countEl = document.getElementById("count");
+
+  const TOTAL_TILES = 10;
+  const TODAY_INDEX = 4;
 
   loginBtn.onclick = () => signInWithRedirect(auth, provider);
   logoutBtn.onclick = () => signOut(auth);
@@ -288,24 +287,26 @@
     a.click();
   };
 
+  /* 🔑 Handle redirect */
   getRedirectResult(auth).catch(() => {});
 
   onAuthStateChanged(auth, async user => {
-    if (user) {
-      authView.style.display = "none";
-      appView.style.display = "flex";
-
-      const ref = doc(db, "users", user.uid);
-      const snap = await getDoc(ref);
-      if (!snap.exists()) {
-        await setDoc(ref, { completedDates: [] });
-      }
-
-      render(user);
-    } else {
+    if (!user) {
       authView.style.display = "flex";
       appView.style.display = "none";
+      return;
     }
+
+    authView.style.display = "none";
+    appView.style.display = "flex";
+
+    const ref = doc(db, "users", user.uid);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, { completedDates: [] });
+    }
+
+    render(user);
   });
 
   if ("serviceWorker" in navigator) {
