@@ -7,113 +7,122 @@
 
   <style>
     body {
+      margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #0f0f0f;
-      color: #ffffff;
+      background: #fff;
+      color: #111;
       display: flex;
       justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      text-align: center;
+      padding: 24px;
     }
 
-    .box {
+    .container {
       max-width: 420px;
-      padding: 32px;
-      border-radius: 12px;
-      background: #161616;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      width: 100%;
     }
 
-    h1 {
-      margin: 0 0 8px;
-      font-size: 1.8rem;
+    /* Header */
+    .header {
+      background: #FFE0B2;
+      border-radius: 24px;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
     }
 
-    .count {
-      font-size: 4rem;
+    .header h1 {
+      font-size: 2rem;
+      margin: 0;
+      line-height: 1.1;
+    }
+
+    .count-circle {
+      width: 64px;
+      height: 64px;
+      background: #B9F871;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
       font-weight: 700;
-      margin: 16px 0;
     }
 
-    .muted {
-      color: #aaaaaa;
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .date-card {
+      background: #FFE0B2;
+      border-radius: 20px;
+      padding: 24px 16px;
+      text-align: center;
+      font-weight: 700;
+      cursor: default;
+    }
+
+    .date-card span {
+      display: block;
       font-size: 0.9rem;
+      margin-bottom: 6px;
     }
 
-    .locked {
-      display: none;
+    .date-card .date {
+      font-size: 1.3rem;
+    }
+
+    /* States (logic will control these) */
+    .today {
+      outline: 3px solid #111;
+      cursor: pointer;
+    }
+
+    .completed {
+      background: #B9F871;
+    }
+
+    .future {
+      opacity: 0.5;
+    }
+
+    /* Quote */
+    .quote {
+      background: #FFE0B2;
+      border-radius: 24px;
+      padding: 24px;
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 700;
     }
   </style>
 </head>
+
 <body>
+  <div class="container">
 
-  <!-- Allowed View -->
-  <div class="box allowed" id="allowed">
-    <h1>Hello, Chethan Kumar</h1>
-    <p class="muted">Journey started</p>
+    <!-- Header -->
+    <div class="header">
+      <h1>Days<br>Completed</h1>
+      <div class="count-circle" id="count">0</div>
+    </div>
 
-    <div class="count" id="daysCompleted">0</div>
-    <p class="muted">Days Completed</p>
+    <!-- Dates Grid (8 tiles) -->
+    <div class="grid" id="datesGrid">
+      <!-- Date cards will be injected here -->
+    </div>
 
-    <p class="muted">“You don’t need motivation. You need consistency.”</p>
+    <!-- Quote -->
+    <div class="quote">
+      “You don’t need motivation.<br>
+      You need consistency.”
+    </div>
+
   </div>
-
-  <!-- Locked View -->
-  <div class="box locked" id="locked">
-    <h1>Access Closed</h1>
-    <p class="muted">
-      Today’s window is over.<br />
-      Come back tomorrow.
-    </p>
-  </div>
-
-<script>
-  const STORAGE_KEY = "completedDays";
-
-  // Get today's date as YYYY-MM-DD
-  function todayString() {
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
-  const today = todayString();
-  let completedDays = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-
-  const allowedEl = document.getElementById("allowed");
-  const lockedEl = document.getElementById("locked");
-  const daysCompletedEl = document.getElementById("daysCompleted");
-
-  // If already opened today → allow
-  if (completedDays.includes(today)) {
-    allowedEl.style.display = "block";
-    lockedEl.style.display = "none";
-  } else {
-    // New day → count it and allow
-    completedDays.push(today);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(completedDays));
-
-    allowedEl.style.display = "block";
-    lockedEl.style.display = "none";
-  }
-
-  // Update count
-  daysCompletedEl.textContent = completedDays.length;
-
-  // Lock page automatically when day changes (at midnight)
-  const now = new Date();
-  const midnight = new Date();
-  midnight.setHours(24, 0, 0, 0);
-
-  setTimeout(() => {
-    allowedEl.style.display = "none";
-    lockedEl.style.display = "block";
-  }, midnight - now);
-</script>
-
 </body>
 </html>
