@@ -5,13 +5,16 @@
   <title>Days Completed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- ANDROID STATUS BAR COLOR -->
+  <meta name="theme-color" content="#f3f3f3" />
+
   <style>
     :root {
       --bg: #f3f3f3;
       --card: #ffffff;
       --primary: #1db954;
       --text: #111;
-      --muted: #777;
+      --muted: #999;
     }
 
     * { box-sizing: border-box; }
@@ -27,7 +30,9 @@
       max-width: 420px;
       margin: auto;
       min-height: 100vh;
-      padding: 20px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
     }
 
     /* ---------- LOGIN ---------- */
@@ -41,7 +46,6 @@
 
     .login h1 {
       font-size: 2rem;
-      margin-bottom: 12px;
     }
 
     .login input {
@@ -66,7 +70,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .avatar {
@@ -86,11 +90,11 @@
       background: var(--card);
       border-radius: 18px;
       padding: 16px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .progress-card strong {
-      font-size: 1.4rem;
+      font-size: 1.5rem;
     }
 
     .bar {
@@ -107,25 +111,31 @@
       background: var(--primary);
     }
 
+    /* ---------- CONTENT (SCROLLABLE) ---------- */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 8px;
+    }
+
     /* ---------- GRID ---------- */
     .grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
-      margin-bottom: 20px;
     }
 
     .day {
       background: var(--card);
       border-radius: 14px;
-      padding: 12px;
+      padding: 14px;
       text-align: center;
       font-size: 0.9rem;
     }
 
-    .day .status {
-      font-size: 0.8rem;
+    .status {
       margin-top: 6px;
+      font-size: 0.8rem;
     }
 
     .completed {
@@ -142,18 +152,11 @@
       opacity: 0.4;
     }
 
-    /* ---------- FOOTER ---------- */
-    .quote {
-      text-align: center;
-      color: var(--primary);
-      font-weight: 600;
-      margin-top: 30px;
-    }
-
+    /* ---------- ACTIONS ---------- */
     .actions {
       display: flex;
       gap: 12px;
-      margin-top: 20px;
+      margin: 16px 0;
     }
 
     .actions button {
@@ -161,8 +164,16 @@
       padding: 14px;
       border-radius: 14px;
       border: none;
-      background: #fff;
+      background: var(--card);
       font-weight: 700;
+    }
+
+    /* ---------- QUOTE ---------- */
+    .quote {
+      text-align: center;
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 8px;
     }
   </style>
 </head>
@@ -183,7 +194,7 @@
   <div id="appView" style="display:none;">
     <div class="header">
       <div class="avatar"></div>
-      <h2 id="greet">Hi, Name</h2>
+      <h2 id="greet">Hi</h2>
     </div>
 
     <div class="progress-card">
@@ -194,7 +205,9 @@
       </div>
     </div>
 
-    <div class="grid" id="grid"></div>
+    <div class="content">
+      <div class="grid" id="grid"></div>
+    </div>
 
     <div class="actions">
       <button id="download">Download</button>
@@ -223,8 +236,8 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  const TOTAL = 9;
-  const TODAY_INDEX = 4;
+  const TOTAL = 15;          // 🔥 MORE DAYS
+  const TODAY_INDEX = 7;
 
   function ymd(d) {
     return d.toISOString().split("T")[0];
