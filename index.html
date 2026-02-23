@@ -3,8 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <title>Days Completed</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f3f3f3" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
 
   <style>
     :root {
@@ -19,7 +23,7 @@
 
     body {
       margin: 0;
-      font-family: system-ui, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text);
     }
@@ -44,7 +48,7 @@
 
     .login h1 {
       font-size: 2rem;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .login input {
@@ -60,22 +64,23 @@
       border: none;
       font-size: 1rem;
       font-weight: 700;
+      cursor: pointer;
     }
 
-    .primary-btn {
+    .primary {
       background: #111;
       color: #fff;
     }
 
-    .secondary-btn {
+    .secondary {
       background: #ddd;
       color: #111;
     }
 
     .error {
-      color: red;
-      font-size: 0.9rem;
       min-height: 22px;
+      font-size: 0.9rem;
+      color: red;
     }
 
     /* ---------- HEADER ---------- */
@@ -90,10 +95,10 @@
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      object-fit: cover;
       background: #e6e6e6;
       border: 1px solid #ddd;
       padding: 4px;
+      object-fit: cover;
     }
 
     .header h2 {
@@ -123,11 +128,11 @@
 
     .bar-fill {
       height: 100%;
-      width: 0%;
       background: var(--primary);
+      width: 0%;
     }
 
-    /* ---------- CONTENT ---------- */
+    /* ---------- DAYS ---------- */
     .content {
       flex: 1;
       overflow-y: auto;
@@ -147,19 +152,14 @@
       font-size: 0.9rem;
     }
 
-    .status {
-      margin-top: 6px;
-      font-size: 0.8rem;
+    .today {
+      outline: 2px solid #111;
+      cursor: pointer;
     }
 
     .completed {
       color: var(--primary);
       font-weight: 700;
-    }
-
-    .today {
-      outline: 2px solid #111;
-      cursor: pointer;
     }
 
     .future {
@@ -180,6 +180,7 @@
       border: none;
       background: var(--card);
       font-weight: 700;
+      cursor: pointer;
     }
 
     /* ---------- QUOTE ---------- */
@@ -200,24 +201,22 @@
     <h1>Login</h1>
     <input id="email" placeholder="Email" />
     <input id="password" type="password" placeholder="Password" />
-    <button id="loginBtn" class="primary-btn">Login</button>
-    <button id="registerBtn" class="secondary-btn">Register</button>
+    <button id="loginBtn" class="primary">Login</button>
+    <button id="registerBtn" class="secondary">Register</button>
     <div class="error" id="error"></div>
   </div>
 
   <!-- APP -->
   <div id="appView" style="display:none;">
     <div class="header">
-      <img id="avatar" class="avatar" alt="Avatar" />
-      <h2 id="greet">Hi</h2>
+      <img id="avatar" class="avatar" />
+      <h2 id="greet"></h2>
     </div>
 
     <div class="progress-card">
       <div>Days Completed</div>
       <strong><span id="count">0</span> / 1000</strong>
-      <div class="bar">
-        <div class="bar-fill" id="bar"></div>
-      </div>
+      <div class="bar"><div class="bar-fill" id="bar"></div></div>
     </div>
 
     <div class="content">
@@ -233,7 +232,6 @@
       “You don’t need motivation.<br>You need consistency.”
     </div>
   </div>
-
 </div>
 
 <script type="module">
@@ -266,23 +264,15 @@
   const TOTAL_DAYS = 15;
   const TODAY_INDEX = 7;
 
-  function isValidEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
+  const emailEl = email;
+  const passEl = password;
+  const errorEl = error;
 
-  function showError(msg) {
-    error.textContent = msg;
-  }
+  const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
-  function clearError() {
-    error.textContent = "";
-  }
+  const ymd = d => d.toISOString().split("T")[0];
 
-  function ymd(d) {
-    return d.toISOString().split("T")[0];
-  }
-
-  function setUserAvatar(user) {
+  function setAvatar(user) {
     avatar.src = `https://api.dicebear.com/7.x/initials/svg?seed=${user.uid}`;
   }
 
@@ -293,7 +283,6 @@
 
     count.textContent = completed.length;
     bar.style.width = `${(completed.length / 1000) * 100}%`;
-
     grid.innerHTML = "";
 
     const today = new Date();
@@ -309,17 +298,15 @@
       el.innerHTML = `<div>Day<br>${d.toLocaleDateString()}</div>`;
 
       if (completed.includes(key)) {
-        el.innerHTML += `<div class="status completed">Completed</div>`;
+        el.innerHTML += `<div class="completed">Completed</div>`;
       } else if (i === TODAY_INDEX) {
         el.classList.add("today");
-        el.innerHTML += `<div class="status">Today</div>`;
         el.onclick = async () => {
           await updateDoc(ref, { completedDates: [...completed, key] });
           render(user);
         };
       } else if (i > TODAY_INDEX) {
         el.classList.add("future");
-        el.innerHTML += `<div class="status">Upcoming</div>`;
       }
 
       grid.appendChild(el);
@@ -327,30 +314,38 @@
   }
 
   loginBtn.onclick = async () => {
-    clearError();
-    if (!isValidEmail(email.value)) return showError("Enter a valid email");
-    if (password.value.length < 6) return showError("Password must be at least 6 characters");
-
+    errorEl.textContent = "";
+    if (!validEmail(emailEl.value)) return errorEl.textContent = "Invalid email";
+    if (passEl.value.length < 6) return errorEl.textContent = "Password min 6 chars";
     try {
-      await signInWithEmailAndPassword(auth, email.value, password.value);
+      await signInWithEmailAndPassword(auth, emailEl.value, passEl.value);
     } catch (e) {
-      showError(e.message);
+      errorEl.textContent = e.message;
     }
   };
 
   registerBtn.onclick = async () => {
-    clearError();
-    if (!isValidEmail(email.value)) return showError("Enter a valid email");
-    if (password.value.length < 6) return showError("Password must be at least 6 characters");
-
+    errorEl.textContent = "";
+    if (!validEmail(emailEl.value)) return errorEl.textContent = "Invalid email";
+    if (passEl.value.length < 6) return errorEl.textContent = "Password min 6 chars";
     try {
-      await createUserWithEmailAndPassword(auth, email.value, password.value);
+      await createUserWithEmailAndPassword(auth, emailEl.value, passEl.value);
     } catch (e) {
-      showError(e.message);
+      errorEl.textContent = e.message;
     }
   };
 
   logout.onclick = () => signOut(auth);
+
+  download.onclick = async () => {
+    const ref = doc(db, "users", auth.currentUser.uid);
+    const snap = await getDoc(ref);
+    const blob = new Blob([JSON.stringify(snap.data(), null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "days-completed.json";
+    a.click();
+  };
 
   onAuthStateChanged(auth, async user => {
     if (!user) {
@@ -362,7 +357,7 @@
     login.style.display = "none";
     appView.style.display = "block";
     greet.textContent = `Hi, ${user.email.split("@")[0]}`;
-    setUserAvatar(user);
+    setAvatar(user);
 
     const ref = doc(db, "users", user.uid);
     if (!(await getDoc(ref)).exists()) {
@@ -371,6 +366,11 @@
 
     render(user);
   });
+
+  // Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js");
+  }
 </script>
 </body>
 </html>
