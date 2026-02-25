@@ -3,192 +3,153 @@
 <head>
   <meta charset="UTF-8" />
   <title>Days Completed</title>
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f3f3f3" />
-
-  <!-- PWA -->
   <link rel="manifest" href="/manifest.json" />
 
   <style>
     :root {
-      --bg: #f3f3f3;
-      --card: #ffffff;
-      --primary: #1db954;
-      --text: #111;
-      --muted: #999;
+      --bg:#f3f3f3;
+      --card:#ffffff;
+      --primary:#1db954;
+      --text:#111;
     }
 
-    * { box-sizing: border-box; }
+    *{box-sizing:border-box}
 
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+    body{
+      margin:0;
+      font-family:system-ui,sans-serif;
+      background:var(--bg);
+      color:var(--text);
     }
 
-    .app {
-      max-width: 420px;
-      margin: auto;
-      min-height: 100vh;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
+    .app{
+      max-width:420px;
+      margin:auto;
+      min-height:100vh;
+      padding:16px;
+      display:flex;
+      flex-direction:column;
     }
 
-    /* ---------- LOGIN ---------- */
-    .login {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 14px;
+    .login{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:14px;
     }
 
-    .login h1 {
-      font-size: 2rem;
-      margin-bottom: 8px;
+    .login input{
+      padding:16px;
+      border-radius:14px;
+      border:1px solid #ccc;
     }
 
-    .login input {
-      padding: 16px;
-      border-radius: 14px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
+    .login button{
+      padding:16px;
+      border-radius:14px;
+      border:none;
+      font-weight:700;
+      cursor:pointer;
     }
 
-    .login button {
-      padding: 16px;
-      border-radius: 14px;
-      border: none;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
+    .primary{background:#111;color:#fff}
+    .secondary{background:#ddd}
+
+    .error{color:red;min-height:20px;font-size:.9rem}
+
+    .header{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:16px;
     }
 
-    .primary {
-      background: #111;
-      color: #fff;
+    .avatar{
+      width:44px;
+      height:44px;
+      border-radius:50%;
+      background:#e6e6e6;
+      border:1px solid #ddd;
+      padding:4px;
     }
 
-    .secondary {
-      background: #ddd;
-      color: #111;
+    .progress-card{
+      background:var(--card);
+      border-radius:18px;
+      padding:16px;
+      margin-bottom:16px;
     }
 
-    .error {
-      min-height: 22px;
-      font-size: 0.9rem;
-      color: red;
+    .progress-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
     }
 
-    /* ---------- HEADER ---------- */
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
+    .edit-btn{
+      font-size:0.8rem;
+      cursor:pointer;
+      color:#666;
     }
 
-    .avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: #e6e6e6;
-      border: 1px solid #ddd;
-      padding: 4px;
-      object-fit: cover;
+    .bar{
+      height:14px;
+      background:#eee;
+      border-radius:999px;
+      overflow:hidden;
+      margin-top:10px;
     }
 
-    .header h2 {
-      margin: 0;
-      font-size: 1.2rem;
+    .bar-fill{
+      height:100%;
+      background:var(--primary);
+      width:0%;
     }
 
-    /* ---------- PROGRESS ---------- */
-    .progress-card {
-      background: var(--card);
-      border-radius: 18px;
-      padding: 16px;
-      margin-bottom: 16px;
+    .content{flex:1;overflow-y:auto}
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
     }
 
-    .progress-card strong {
-      font-size: 1.5rem;
+    .day{
+      background:var(--card);
+      border-radius:14px;
+      padding:14px;
+      text-align:center;
+      font-size:.9rem;
     }
 
-    .bar {
-      height: 14px;
-      background: #eee;
-      border-radius: 999px;
-      overflow: hidden;
-      margin-top: 10px;
+    .today{outline:2px solid #111;cursor:pointer}
+    .completed{color:var(--primary);font-weight:700}
+    .future{opacity:.4}
+
+    .actions{
+      display:flex;
+      gap:12px;
+      margin:16px 0;
     }
 
-    .bar-fill {
-      height: 100%;
-      background: var(--primary);
-      width: 0%;
+    .actions button{
+      flex:1;
+      padding:14px;
+      border-radius:14px;
+      border:none;
+      background:var(--card);
+      font-weight:700;
+      cursor:pointer;
     }
 
-    /* ---------- DAYS ---------- */
-    .content {
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-
-    .day {
-      background: var(--card);
-      border-radius: 14px;
-      padding: 14px;
-      text-align: center;
-      font-size: 0.9rem;
-    }
-
-    .today {
-      outline: 2px solid #111;
-      cursor: pointer;
-    }
-
-    .completed {
-      color: var(--primary);
-      font-weight: 700;
-    }
-
-    .future {
-      opacity: 0.4;
-    }
-
-    /* ---------- ACTIONS ---------- */
-    .actions {
-      display: flex;
-      gap: 12px;
-      margin: 16px 0;
-    }
-
-    .actions button {
-      flex: 1;
-      padding: 14px;
-      border-radius: 14px;
-      border: none;
-      background: var(--card);
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    /* ---------- QUOTE ---------- */
-    .quote {
-      text-align: center;
-      color: var(--primary);
-      font-weight: 600;
-      margin-bottom: 8px;
+    .quote{
+      text-align:center;
+      color:var(--primary);
+      font-weight:600;
+      margin-bottom:8px;
     }
   </style>
 </head>
@@ -196,182 +157,158 @@
 <body>
 <div class="app">
 
-  <!-- LOGIN -->
-  <div class="login" id="login">
-    <h1>Login/Register</h1>
-    <h5>Invalid email/error ? Use the same fields for both Login and Registration.</h5>
-    <input id="email" placeholder="Email" />
-    <input id="password" type="password" placeholder="Password" />
-    <button id="loginBtn" class="primary">Login</button>
-    <button id="registerBtn" class="secondary">Register</button>
-    <div class="error" id="error"></div>
+<div class="login" id="login">
+  <h1>Login</h1>
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button id="loginBtn" class="primary">Login</button>
+  <button id="registerBtn" class="secondary">Register</button>
+  <div id="error" class="error"></div>
+</div>
+
+<div id="appView" style="display:none;">
+  <div class="header">
+    <img id="avatar" class="avatar">
+    <h2 id="greet"></h2>
   </div>
 
-  <!-- APP -->
-  <div id="appView" style="display:none;">
-    <div class="header">
-      <img id="avatar" class="avatar" />
-      <h2 id="greet"></h2>
+  <div class="progress-card">
+    <div class="progress-top">
+      <div>
+        Days Completed<br>
+        <strong><span id="count">0</span> / <span id="goal">365</span></strong>
+      </div>
+      <div class="edit-btn" id="editGoal">Edit</div>
     </div>
+    <div class="bar"><div class="bar-fill" id="bar"></div></div>
+  </div>
 
-    <div class="progress-card">
-      <div>Days Completed</div>
-      <strong><span id="count">0</span> / 1000</strong>
-      <div class="bar"><div class="bar-fill" id="bar"></div></div>
-    </div>
+  <div class="content">
+    <div class="grid" id="grid"></div>
+  </div>
 
-    <div class="content">
-      <div class="grid" id="grid"></div>
-    </div>
+  <div class="actions">
+    <button id="download">Download</button>
+    <button id="logout">Logout</button>
+  </div>
 
-    <div class="actions">
-      <button id="download">Download</button>
-      <button id="logout">Logout</button>
-    </div>
-
-    <div class="quote">
-      “You don’t need motivation.<br>You need consistency.”
-    </div>
+  <div class="quote">
+    “You don’t need motivation.<br>You need consistency.”
   </div>
 </div>
 
+</div>
+
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import {
-    getAuth,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    onAuthStateChanged,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import {
-    getFirestore,
-    doc,
-    getDoc,
-    setDoc,
-    updateDoc
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC2eBGQa-QrmzzabyGabU6e3vt9UomlI7c",
-    authDomain: "completed-days.firebaseapp.com",
-    projectId: "completed-days"
-  };
+const firebaseConfig = {
+  apiKey:"AIzaSyC2eBGQa-QrmzzabyGabU6e3vt9UomlI7c",
+  authDomain:"completed-days.firebaseapp.com",
+  projectId:"completed-days"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
 
-  const TOTAL_DAYS = 15;
-  const TODAY_INDEX = 7;
+const TOTAL_DAYS=15;
+const TODAY_INDEX=7;
 
-  const emailEl = email;
-  const passEl = password;
-  const errorEl = error;
+const validEmail=e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+const ymd=d=>d.toISOString().split("T")[0];
 
-  const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+function setAvatar(user){
+  avatar.src=`https://api.dicebear.com/7.x/initials/svg?seed=${user.uid}`;
+}
 
-  const ymd = d => d.toISOString().split("T")[0];
+async function render(user){
+  const ref=doc(db,"users",user.uid);
+  const snap=await getDoc(ref);
+  const data=snap.data();
+  const completed=data.completedDates||[];
+  const goalDays=data.goalDays||365;
 
-  function setAvatar(user) {
-    avatar.src = `https://api.dicebear.com/7.x/initials/svg?seed=${user.uid}`;
+  count.textContent=completed.length;
+  goal.textContent=goalDays;
+  bar.style.width=`${(completed.length/goalDays)*100}%`;
+
+  grid.innerHTML="";
+  const today=new Date(); today.setHours(0,0,0,0);
+
+  for(let i=0;i<TOTAL_DAYS;i++){
+    const d=new Date(today);
+    d.setDate(today.getDate()+i-TODAY_INDEX);
+    const key=ymd(d);
+
+    const el=document.createElement("div");
+    el.className="day";
+    el.innerHTML=`Day<br>${d.toLocaleDateString()}`;
+
+    if(completed.includes(key)){
+      el.innerHTML+=`<div class="completed">Completed</div>`;
+    }else if(i===TODAY_INDEX){
+      el.classList.add("today");
+      el.onclick=async()=>{
+        await updateDoc(ref,{completedDates:[...completed,key]});
+        render(user);
+      };
+    }else if(i>TODAY_INDEX){
+      el.classList.add("future");
+    }
+
+    grid.appendChild(el);
+  }
+}
+
+loginBtn.onclick=async()=>{
+  error.textContent="";
+  if(!validEmail(email.value)) return error.textContent="Invalid email";
+  if(password.value.length<6) return error.textContent="Min 6 chars";
+  await signInWithEmailAndPassword(auth,email.value,password.value);
+};
+
+registerBtn.onclick=async()=>{
+  error.textContent="";
+  if(!validEmail(email.value)) return error.textContent="Invalid email";
+  if(password.value.length<6) return error.textContent="Min 6 chars";
+  await createUserWithEmailAndPassword(auth,email.value,password.value);
+};
+
+logout.onclick=()=>signOut(auth);
+
+editGoal.onclick=async()=>{
+  const user=auth.currentUser;
+  const newGoal=parseInt(prompt("Enter goal days (1 - 10000)"));
+  if(!newGoal||newGoal<1||newGoal>10000) return alert("Invalid goal");
+  const ref=doc(db,"users",user.uid);
+  await updateDoc(ref,{goalDays:newGoal});
+  render(user);
+};
+
+onAuthStateChanged(auth,async user=>{
+  if(!user){
+    login.style.display="flex";
+    appView.style.display="none";
+    return;
   }
 
-  async function render(user) {
-    const ref = doc(db, "users", user.uid);
-    const snap = await getDoc(ref);
-    const completed = snap.data().completedDates || [];
+  login.style.display="none";
+  appView.style.display="block";
+  greet.textContent=`Hi, ${user.email.split("@")[0]}`;
+  setAvatar(user);
 
-    count.textContent = completed.length;
-    bar.style.width = `${(completed.length / 1000) * 100}%`;
-    grid.innerHTML = "";
-
-    const today = new Date();
-    today.setHours(0,0,0,0);
-
-    for (let i = 0; i < TOTAL_DAYS; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i - TODAY_INDEX);
-      const key = ymd(d);
-
-      const el = document.createElement("div");
-      el.className = "day";
-      el.innerHTML = `<div>Day<br>${d.toLocaleDateString()}</div>`;
-
-      if (completed.includes(key)) {
-        el.innerHTML += `<div class="completed">Completed</div>`;
-      } else if (i === TODAY_INDEX) {
-        el.classList.add("today");
-        el.onclick = async () => {
-          await updateDoc(ref, { completedDates: [...completed, key] });
-          render(user);
-        };
-      } else if (i > TODAY_INDEX) {
-        el.classList.add("future");
-      }
-
-      grid.appendChild(el);
-    }
+  const ref=doc(db,"users",user.uid);
+  if(!(await getDoc(ref)).exists()){
+    await setDoc(ref,{goalDays:365,completedDates:[]});
   }
 
-  loginBtn.onclick = async () => {
-    errorEl.textContent = "";
-    if (!validEmail(emailEl.value)) return errorEl.textContent = "Invalid email";
-    if (passEl.value.length < 6) return errorEl.textContent = "Password min 6 chars";
-    try {
-      await signInWithEmailAndPassword(auth, emailEl.value, passEl.value);
-    } catch (e) {
-      errorEl.textContent = e.message;
-    }
-  };
-
-  registerBtn.onclick = async () => {
-    errorEl.textContent = "";
-    if (!validEmail(emailEl.value)) return errorEl.textContent = "Invalid email";
-    if (passEl.value.length < 6) return errorEl.textContent = "Password min 6 chars";
-    try {
-      await createUserWithEmailAndPassword(auth, emailEl.value, passEl.value);
-    } catch (e) {
-      errorEl.textContent = e.message;
-    }
-  };
-
-  logout.onclick = () => signOut(auth);
-
-  download.onclick = async () => {
-    const ref = doc(db, "users", auth.currentUser.uid);
-    const snap = await getDoc(ref);
-    const blob = new Blob([JSON.stringify(snap.data(), null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "days-completed.json";
-    a.click();
-  };
-
-  onAuthStateChanged(auth, async user => {
-    if (!user) {
-      login.style.display = "flex";
-      appView.style.display = "none";
-      return;
-    }
-
-    login.style.display = "none";
-    appView.style.display = "block";
-    greet.textContent = `Hi, ${user.email.split("@")[0]}`;
-    setAvatar(user);
-
-    const ref = doc(db, "users", user.uid);
-    if (!(await getDoc(ref)).exists()) {
-      await setDoc(ref, { completedDates: [] });
-    }
-
-    render(user);
-  });
-
-  // Service Worker
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js");
-  }
+  render(user);
+});
 </script>
 </body>
 </html>
